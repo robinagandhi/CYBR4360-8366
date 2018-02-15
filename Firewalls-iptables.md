@@ -284,7 +284,7 @@ It should succeed now.
 
 ### Non-terminating Targets
 
-A non-terminating target is LOG. With this target, the rule processing continues to look for another matching rule. The LOG chain helps to document any anomalies that have been detected in the kernel log, but does not filter the traffic. If no other additional rule matches the packet, then the default policy is applied. This may also fill up the kernel log, so use with caution.
+A non-terminating target is LOG, i.e. rule traversal continues at the next rule. The LOG chain helps to document any anomalies that have been detected in the kernel log, but does not filter the traffic. If no other additional rule matches the packet, then the default policy is applied. This may also fill up the kernel log, so use with caution. Also to drop the logged packets you have to use two separate rules with the same matching criteria, first using target LOG and then DROP.
 
 Log prefixes are specified using the following syntax: `--log-prefix prefix`. This option allows us to prefix log messages with the specified prefix; up to 29 letters long, and useful for distinguishing messages in the logs.
 
