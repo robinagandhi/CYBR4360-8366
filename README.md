@@ -1,37 +1,21 @@
-## Welcome to GitHub Pages
+## CYBR 4360/8366
 
-You can use the [editor on GitHub](https://github.com/robinagandhi/CYBR4360-8366/edit/master/README.md) to maintain and preview the content for your website in Markdown files.
+This is a repository for CYBR 4360/8366 Foundations of Information Assurance course. 
 
-Whenever you commit to this repository, GitHub Pages will run [Jekyll](https://jekyllrb.com/) to rebuild the pages in your site, from the content in your Markdown files.
 
-### Markdown
+License and Copyright
+---------------------
 
-Markdown is a lightweight and easy-to-use syntax for styling your writing. It includes conventions for
+Copyright © 2018 University of Nebraska at Omaha
 
-```markdown
-Syntax highlighted code block
+This repository is free software: you can redistribute it and/or modify it under the
+terms of the GNU General Public License as published by the Free Software
+Foundation, either version 3 of the License, or (at your option) any later
+version. See the file LICENSE for more details.
 
-# Header 1
-## Header 2
-### Header 3
+All associated documentation is licensed under the terms of the Creative
+Commons Attribution Share-Alike 4.0 license. See the file CC-BY-SA-4.0 for more
+details.
 
-- Bulleted
-- List
+<a rel="license" href="http://creativecommons.org/licenses/by-nc-sa/4.0/"><img alt="Creative Commons License" style="border-width:0" src="https://i.creativecommons.org/l/by-nc-sa/4.0/88x31.png" /></a><br /><span xmlns:dct="http://purl.org/dc/terms/" property="dct:title">CYBR 4360/8366</span> by <a xmlns:cc="http://creativecommons.org/ns#" href="http://faculty.ist.unomaha.edu/rgandhi/" property="cc:attributionName" rel="cc:attributionURL">Robin Gandhi</a> is licensed under a <a rel="license" href="http://creativecommons.org/licenses/by-nc-sa/4.0/">Creative Commons Attribution-NonCommercial-ShareAlike 4.0 International License</a>.img
 
-1. Numbered
-2. List
-
-**Bold** and _Italic_ and `Code` text
-
-[Link](url) and ![Image](src)
-```
-
-For more details see [GitHub Flavored Markdown](https://guides.github.com/features/mastering-markdown/).
-
-### Jekyll Themes
-
-Your Pages site will use the layout and styles from the Jekyll theme you have selected in your [repository settings](https://github.com/robinagandhi/CYBR4360-8366/settings). The name of this theme is saved in the Jekyll `_config.yml` configuration file.
-
-### Support or Contact
-
-Having trouble with Pages? Check out our [documentation](https://help.github.com/categories/github-pages-basics/) or [contact support](https://github.com/contact) and we’ll help you sort it out.
