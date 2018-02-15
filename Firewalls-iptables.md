@@ -282,9 +282,9 @@ sudo apt-get update
 ```
 It should succeed now.
 
-### Non-terminating Chains
+### Non-terminating Targets
 
-A non-terminating chain is the LOG chain or any user defined chains. In these chains, the rule processing continues even after a rule matches the packet. The LOG chain helps to document any anomalies that have been detected in the kernel log, but does not filter the traffic. If no other additional rule matches the packet, then the default policy is applied. 
+A non-terminating target is LOG. With this target, the rule processing continues to look for another matching rule. The LOG chain helps to document any anomalies that have been detected in the kernel log, but does not filter the traffic. If no other additional rule matches the packet, then the default policy is applied. This may also fill up the kernel log, so use with caution.
 
 Log prefixes are specified using the following syntax: `--log-prefix prefix`. This option allows us to prefix log messages with the specified prefix; up to 29 letters long, and useful for distinguishing messages in the logs.
 
