@@ -108,7 +108,7 @@ ifconfig
 ```
 Here `eth0` is the network interface we are interested in and `lo` is the [loopback interface](https://en.wikipedia.org/wiki/Loopback). 
 
-Make a good note of the IP address. It should begin with `192.168`.
+Make a good note of the IP address. It should begin with `192.168` or `172.16`.
 
 To see the effects of our firewall configuration, we need another machine that can help us make observations. 
 
@@ -309,7 +309,8 @@ The connection will fail as there is no telnet service running on the Ubuntu VM.
 
 Kernel log messages in the Ubuntu VM can be viewed using the following command in a terminal. We filter the messages with the "attempted" keyword that we put into the log-prefix before.
 
-```bashdmesg | grep –i attempted
+```bash
+dmesg | grep –i attempted
 ```
 You will see that many details are now available about the connection attempt. Such logs allow detection of rouge connections or scanning attempts. 
 
