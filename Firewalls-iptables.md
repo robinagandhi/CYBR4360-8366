@@ -291,7 +291,7 @@ Log prefixes are specified using the following syntax: `--log-prefix prefix`. Th
 Let's say we wanted to know if someone was attempting a telnet connection through port 23 on our machine. Telnet is a very insecure protocol and often left open as a maintenance backdoor in devices with poor security. So, to log all telnet attempts we can use the following command:
 
 ```bash
-iptables –A INPUT –p tcp --dport 23 -j LOG --log-prefix “Attempted Telnet connection: ”
+sudo iptables –A INPUT –p tcp --dport 23 -j LOG --log-prefix “Attempted Telnet connection: ”
 ```
 
 The above command should be easy to understand now. But, where is the log message generated when somebody attempts to make a telnet connection attempt? First, let's trigger this rule.
