@@ -421,9 +421,9 @@ Unless you commit your iptables rules to a specific location, they will be reset
 
 ```bash
 sudo apt-get install iptables-persistent
-iptables-save > rules.v4
+sudo iptables-save > rules.v4
 sudo cp rules.v4 /etc/iptables/rules.v4
-ip6tables-save > rules.v6
+sudo ip6tables-save > rules.v6
 sudo cp rules.v6 /etc/iptables/rules.v6
 ```
 That's it for Firewalls in this lab. Happy Surfing.
