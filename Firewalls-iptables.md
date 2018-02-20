@@ -345,6 +345,8 @@ For illustration, let us set the default INPUT chain policy to drop.
 
 ```bash
 sudo iptables -P INPUT DROP
+# Flush all rules in the INPUT chain
+sudo iptables -F INPUT
 ```
 
 > Switch to the Kali VM
