@@ -114,7 +114,7 @@ To see the effects of our firewall configuration, we need another machine that c
 
 > So now start the Kali VM. 
  
-Login to it with username/password: *root/toor* and open a terminal.
+Login to it with username/password: *root/password* and open a terminal.
 
 Now ping the Ubuntu VM using its IP address. [ping](https://en.wikipedia.org/wiki/Ping_%28networking_utility%29) is a networking utility to test reachability.
 
