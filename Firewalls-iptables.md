@@ -108,8 +108,14 @@ ifconfig
 ```
 Here `eth0` is the network interface we are interested in and `lo` is the [loopback interface](https://en.wikipedia.org/wiki/Loopback). 
 
-Make a good note of the IP address. It should begin with `192.168` or `172.16`.
+Make a good note of the IP address. It should begin with `172.16`.
 
+First, let's clear all our firewall settings so that they are reset to factory settings. We will fully understand these commands a little later in the lab. But for now, fire off these command in a terminal. Enter the password `steal2011` if prompted. These commands if successful, you will not produce any output.
+
+```bash
+sudo iptables -F INPUT
+sudo iptables -P INPUT ACCEPT
+```
 To see the effects of our firewall configuration, we need another machine that can help us make observations. 
 
 > So now start the Kali VM. 
