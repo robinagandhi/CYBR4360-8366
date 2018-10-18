@@ -142,6 +142,11 @@ While you can do alot [more with nmap, including firewall evasion](https://www.s
 ssh -l steal Ubuntu_machine_IP_address_here
 ```
 
+Before moving on, disconnect from the Ubuntu instance:
+
+```bash
+exit
+```
 
 ## Working with iptables
 
