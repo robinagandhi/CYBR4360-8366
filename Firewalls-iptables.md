@@ -101,7 +101,7 @@ Rule 3 is often implemented as a "Default Policy", instead of an explicit rule i
 
 > Start the Ubuntu VM. 
 
-Login to it with username/password: *steal/steal2011* and open a terminal. Let's note the IP address. 
+Login to it with username/password: *steal/steal2018* and open a terminal. Let's note the IP address. 
 
 ```bash
 ifconfig
@@ -110,7 +110,18 @@ Here `eth0` is the network interface we are interested in and `lo` is the [loopb
 
 Make a good note of the IP address. It should begin with `172.16`.
 
-First, let's clear all our firewall settings so that they are reset to factory settings. We will fully understand these commands a little later in the lab. But for now, fire off these command in a terminal. Enter the password `steal2011` if prompted. These commands if successful, you will not produce any output.
+Let's now install a web server on this machine. We will install the Apache Http webserver with default settings.
+
+```bash
+sudo apt-get install apache2
+```
+
+Go ahead and start the web server with the following command:
+```bash
+service apache2 start
+```
+
+Now, let's clear all our firewall settings so that they are reset to factory settings. We will fully understand these commands a little later in the lab. But for now, fire off these command in a terminal. If promted, authenticated with the password for the steal account. These commands if successful, you will not produce any output.
 
 ```bash
 sudo iptables -F INPUT
@@ -120,7 +131,7 @@ To see the effects of our firewall configuration, we need another machine that c
 
 > So now start the Kali VM. 
  
-Login to it with username/password: *root/password* and open a terminal.
+Login to it with username/password: *root/steal2018* and open a terminal.
 
 Now ping the Ubuntu VM using its IP address. [ping](https://en.wikipedia.org/wiki/Ping_%28networking_utility%29) is a networking utility to test reachability.
 
@@ -151,7 +162,7 @@ As mentioned before Linux has a firewall built right into the kernel and it is c
 
 The built in Linux firewall can be set up in several modes like packet filtering, which is the default mode, network address translation, or mangle, where you can modify the packets as they pass through the firewall. We will focus on the IPv4 packet filtering function for this lab.
 
-Now to view your current firewall rules in the Ubuntu VM, fire off this command in a terminal. Enter the password `steal2011` if prompted.
+Now to view your current firewall rules in the Ubuntu VM, fire off this command in a terminal. Enter the password for the steal account if prompted.
 
 ```bash
 sudo iptables -nL
