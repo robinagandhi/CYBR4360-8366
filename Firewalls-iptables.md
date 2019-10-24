@@ -101,7 +101,7 @@ Rule 3 is often implemented as a "Default Policy", instead of an explicit rule i
 
 > Start the Ubuntu VM. 
 
-Login to it with username/password: *steal/steal2018* and open a terminal. Let's note the IP address. 
+Login to it and open a terminal. Let's note the IP address. 
 
 ```bash
 ifconfig
@@ -131,7 +131,7 @@ To see the effects of our firewall configuration, we need another machine that c
 
 > So now start the Kali VM. 
  
-Login to it with username/password: *root/steal2018* and open a terminal.
+Login to it and open a terminal.
 
 Now ping the Ubuntu VM using its IP address. [ping](https://en.wikipedia.org/wiki/Ping_%28networking_utility%29) is a networking utility to test reachability.
 
