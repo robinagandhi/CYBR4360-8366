@@ -108,7 +108,7 @@ ifconfig
 ```
 Here `eth0` is the network interface we are interested in and `lo` is the [loopback interface](https://en.wikipedia.org/wiki/Loopback). 
 
-Make a good note of the IP address. It should begin with `172.16`.
+Make a good note of the IP address. It should begin with `192.168`.
 
 Let's now install a web server on this machine. We will install the Apache Http webserver with default settings.
 
