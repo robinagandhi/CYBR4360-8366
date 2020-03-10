@@ -261,12 +261,13 @@ sudo iptables -nL INPUT
 
 If your website defaults to https then you may consider making the port 443 rule the first rule. This will avoid unnecessary evaluation of the port 80 rule for most network packets.
 
-Are these rules enough? Yes. But, just these rules can be very restrictive and may hamper debugging. For example, try running the following command on your server to update its software repositories.
+Are these rules enough? Yes. But, just these rules can be very restrictive and may hamper debugging. For example, let's add an online software respository for Ubuntu and then try running a command to update software repositories. 
 
 ```bash
+sudo add-apt-repository http://us.archive.ubuntu.com/ubuntu/
 sudo apt-get update
 ```
-This command will most likely timeout due to firewall restrictions. The error messages are not likely to be useful either. So let's add a few additional firewall rules will make server administration and updates much easier.
+The last command will most likely timeout due to firewall restrictions. The error messages are not likely to be useful either. So let's add a few additional firewall rules will make server administration and updates much easier. Hit `Crtl+C` to quit the update process.
 
 First you want the server to be able to communicate with itself. This is often called sending traffic to "loopback" interface. Also, a special network adapter is dedicated to the loopback interface. You may check its name by using the `ifconfig` command. This command shows all the network adapters and associated network addresses. Below we see that the name for the loopback adapter is `lo`.
 
