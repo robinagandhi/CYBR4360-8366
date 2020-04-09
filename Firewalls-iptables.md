@@ -153,6 +153,11 @@ While you can do alot [more with nmap, including firewall evasion](https://www.s
 ssh -l steal Ubuntu_machine_IP_address_here
 ```
 
+Before moving on, disconnect from the Ubuntu instance:
+
+```bash
+exit
+```
 
 ## Working with iptables
 
@@ -332,7 +337,7 @@ dmesg | grep –i attempted
 ```
 You will see that many details are now available about the connection attempt. Such logs allow detection of rouge connections or scanning attempts. 
 
-There many other advanced firewall rules that can be authored. But these set of rules should be sufficient to demonstrate the inner workings of a Firewall. We have also managed to significantly reduce the exposed ports of the Ubuntu VM to those that are absolutely necessary for it to work. Nothing more. Any IPv4 network traffic that does not match our rules will be processed by the default policy. In our case, the default policy is DROP.
+There many be other advanced firewall rules that can be authored. But these set of rules should be sufficient to demonstrate the inner workings of a Firewall. We have also managed to significantly reduce the exposed ports of the Ubuntu VM to those that are absolutely necessary for it to work. Nothing more. Any IPv4 network traffic that does not match our rules will be processed by the default policy. In our case, the default policy is DROP.
 
 For more details on `iptables`, consult these web resources:
 
