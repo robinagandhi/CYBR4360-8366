@@ -153,6 +153,8 @@ While you can do alot [more with nmap, including firewall evasion](https://www.s
 ssh -l steal Ubuntu_machine_IP_address_here
 ```
 
+You may notice that since steal is a root account, you are not permitted to ssh using a root privileged account. 
+
 
 ## Working with iptables
 
@@ -435,16 +437,16 @@ sudo ip6tables -P INPUT ACCEPT
 
 ### Making Firewall Settings Persistent (Optional)
 
-Unless you commit your iptables rules to a specific location, they will be reset upon machine restart. To save the rules and make them persistent across machine reboots, the following commands will work on Ubuntu OS.
+Unless you commit your iptables rules to a specific location, they will be reset upon machine restart. To save the rules the following commands will work on Ubuntu OS.
 
 ```bash
-sudo apt-get install iptables-persistent
 sudo iptables-save > rules.v4
 sudo cp rules.v4 /etc/iptables/rules.v4
 sudo ip6tables-save > rules.v6
 sudo cp rules.v6 /etc/iptables/rules.v6
 ```
-That's it for Firewalls in this lab. Happy Surfing.
+
+Once saved, these rules can be restored using the iptables-restore command. That's it for Firewalls in this lab. Happy Surfing.
 
 > Firewalls are an essential component of "Defense-in-Depth" strategy. It can certainly slowdown an attacker. However, firewalls cannot keep a determined adversary out. There are many ways in which [firewalls can be abused and easily bypassed](https://pentestlab.blog/2012/04/02/nmap-techniques-for-avoiding-firewalls/). Such attacks need to be constantly monitored using Intrusion Detection Systems (IDS) and Network Monitoring solutions. The final line of defense is applications built using secure coding practices and proper encryption implementations.  
 
@@ -454,6 +456,7 @@ That's it for Firewalls in this lab. Happy Surfing.
 
 * Observe the output of the following command: `sudo iptables -v -L`
 * Listing rules in plain format: `sudo iptables -S`
+* [Netfilter](https://www.netfilter.org/projects/iptables/index.html)
 * 25 Most Used iptables commands, [The Geek Stuff](http://www.thegeekstuff.com/2011/06/iptables-rules-examples/)
 * [Microsoft The OSI Model's Seven Layers Defined and Functions Explained] (https://support.microsoft.com/en-us/kb/103884)  
 * [Ubuntu iptables Wiki](https://help.ubuntu.com/community/IptablesHowTo)  
