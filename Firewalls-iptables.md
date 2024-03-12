@@ -457,10 +457,9 @@ Once saved, these rules can be restored using the iptables-restore command. That
 * Observe the output of the following command: `sudo iptables -v -L`
 * Listing rules in plain format: `sudo iptables -S`
 * [Netfilter](https://www.netfilter.org/projects/iptables/index.html)
-* 25 Most Used iptables commands, [The Geek Stuff](http://www.thegeekstuff.com/2011/06/iptables-rules-examples/)
+* [Common iptables commands](https://geekflare.com/common-iptables-commands/)
 * [Microsoft The OSI Model's Seven Layers Defined and Functions Explained] (https://support.microsoft.com/en-us/kb/103884)  
 * [Ubuntu iptables Wiki](https://help.ubuntu.com/community/IptablesHowTo)  
-* [CentOS iptables Wiki](https://wiki.centos.org/HowTos/Network/IPTables)
 * [Uncomplicated Firewall](https://wiki.ubuntu.com/UncomplicatedFirewall): A much simpler alternative to iptables! Ease of Use.
 
 
