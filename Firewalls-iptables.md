@@ -133,7 +133,7 @@ To see the effects of our firewall configuration, we need another machine that c
  
 Login to it and open a terminal.
 
-Now ping the Ubuntu VM using its IP address. [ping](https://en.wikipedia.org/wiki/Ping_%28networking_utility%29) is a networking utility to test reachability.
+Now ping the Ubuntu VM using its IP address. [ping](https://en.wikipedia.org/wiki/Ping_%28networking_utility%29) is a networking utility to test reachability. In the command below, replace `Ubuntu_machine_IP_address_here` with the IP address you noted above. It should begin with `192.168`.
 
 ```bash
 ping Ubuntu_machine_IP_address_here
@@ -142,12 +142,12 @@ You should see success messages. Hit CRTL + C to close the ping process.
 
 We also have a default apache webserver running on the Ubuntu VM on port 80. To test this, in your Kali VM open a browser and enter the IP address of the Ubuntu VM in the address bar. You should see the default Apache webpage. 
 
-To see what else is open, we can do a port scan using [Nmap](https://nmap.org/book/man.html), which is a network scanner. To use it simply use this command in the Kali VM terminal. Keep in mind that port scanning unauthorized computers is not legal or ethical.
+To see what else is open, we can do a port scan using [Nmap](https://nmap.org/book/man.html), which is a network scanner. To use it simply use this command in the Kali VM terminal. Keep in mind that port scanning unauthorized computers is not legal or ethical. Again, in the command below, replace `Ubuntu_machine_IP_address_here` with the IP address you noted above. It should begin with `192.168`.
 
 ```bash
 nmap Ubuntu_machine_IP_address_here
 ```
-While you can do alot [more with nmap, including firewall evasion](https://www.stationx.net/nmap-cheat-sheet/), the above command will probably report that port 22 (SSH) and port 80 (HTTP) are open on the Ubuntu VM. Since we now know that SSH is running we can open a remote shell using the following command:
+While you can do alot [more with nmap, including firewall evasion](https://www.stationx.net/nmap-cheat-sheet/), the above command will probably report that port 22 (SSH) and port 80 (HTTP) are open on the Ubuntu VM. Since we now know that SSH is running we can open a remote shell using the following command. You should get the hang of this now, replace `Ubuntu_machine_IP_address_here` with the IP address you noted above. It should begin with `192.168`.
 
 ```bash
 ssh -l steal Ubuntu_machine_IP_address_here
