@@ -26,7 +26,7 @@ The goal of this section is to build the mental model that makes the hands-on se
 
 ## A.1 — The Three Chains
 
-The Linux netfilter firewall processes packets through three built-in **chains**. Each chain intercepts packets at a different point in their journey through the kernel.
+The Linux netfilter firewall processes network packets through three built-in **chains**. Each chain intercepts packets at a different point in their journey through the kernel.
 
 ```
                         ┌─────────────────────────────────────┐
@@ -53,8 +53,8 @@ For each scenario below, write which chain(s) are relevant. Discuss your reasoni
 
 | # | Scenario | Chain(s) |
 |---|---|---|
-| 1 | An external user requests a web page on your server | |
-| 2 | Your linux server runs `apt-get update` to download package lists | |
+| 1 | An external user requests a web page on your Ubuntu server where the firewall is configured | |
+| 2 | Your Ubuntu server runs `apt-get update` to download package lists | |
 | 3 | A ping (`echo-request`) arrives from another machine | |
 | 4 | Your server relays traffic between two other machines (acting as a router) | |
 | 5 | Your server's local MySQL process connects to `localhost:3306` | |
@@ -145,14 +145,14 @@ Answer these questions before moving on:
 <details>
 <summary>▶ Discussion Notes</summary>
 
-1. **Whitelist (DROP default)** is correct for a public server. You know exactly which services you are running — allow those specifically. Everything else is unknown and unwanted.
+1. **Whitelist (DROP default)** is correct for a public server. You know exactly which services you are running, allow those specifically. Everything else is unknown and unwanted.
 
-2. The flaw is **enumeration of unknowns**: you cannot know every dangerous port in advance, especially as new exploits emerge. A whitelisting approach does not require you to predict threats — it rejects anything not explicitly permitted.
+2. The flaw is **lack of fail-safe defaults and complete mediation when a port is not included in the blacklist**: A whitelisting approach rejects anything not explicitly permitted, while making sure that all traffic is filtered by the default policy or specific rules.
 
 3. The packet is **silently dropped** — the sender gets no response. From the sender's perspective, the port appears filtered (as opposed to closed, which sends a TCP RST).
 
 4. `DROP` discards the packet silently. `REJECT` sends an ICMP "port unreachable" error back to the sender. `DROP` is preferred because:
-   - It gives no information to a scanner about whether a host exists
+   - It gives no information to a scanner about whether a host exists. This makes reconnaissance more difficult.
    - It consumes attacker time (waiting for a timeout rather than receiving an immediate refusal)
    - It does not generate additional outbound traffic
 
@@ -162,7 +162,7 @@ Answer these questions before moving on:
 
 ## A.4 — Rule Ordering Puzzles
 
-Firewall Rules are evaluated **top to bottom**. The **first matching rule wins** — remaining rules are not evaluated. This is one of the most common sources of firewall bugs.
+Firewall Rules are evaluated **top to bottom**. The **first matching rule wins** — remaining rules are not evaluated. This is one of the most common sources of firewall bugs. Finally,the default policy is evaluated only if no rules match. The default policy is not a catch-all that applies to every packet — **it only applies to packets that fail to match any rule.** In the puzzles below the default policy is shown at the top of the chain for clarity, but remember that it is only evaluated if no rules match.
 
 ### ✏️ Exercise A.4 — Predict the Outcome
 
@@ -207,8 +207,7 @@ num  target  prot  source    destination   extra
 3    ACCEPT  tcp   anywhere  anywhere      dport 22
 ```
 
-- You run `apt-get update` from Ubuntu. It contacts an Ubuntu mirror on port 80. Does the update succeed?
-- Can you be pinged from Ubuntu?
+- You run `apt-get update` from Ubuntu. It contacts an Ubuntu update mirror on port 80. Does the update succeed?
 - What critical rule is missing?
 
 ---
@@ -296,7 +295,7 @@ UFW is a command-line frontend for `iptables` that trades raw power for clarity.
 
 ### On the Ubuntu VM:
 
-Install Apache and Openssh and start it:
+Perform a clean install of Apache and OpenSSH and start these services:
 ```bash
 sudo apt-get purge openssh-server
 sudo apt-get purge openssh-client
@@ -306,7 +305,7 @@ sudo apt-get install apache2 -y
 sudo service apache2 start 
 ```
 
-Check that Apache and Openssh are running:
+Check that Apache and OpenSSH are running:
 ```bash
 sudo service apache2 status
 sudo service ssh status
@@ -314,7 +313,7 @@ sudo service ssh status
 
 Record the Ubuntu VM's IP address:
 ```bash
-ip a show eth0
+ip a show
 ```
 
 > Note the `inet` address — it will look like `10.61.x.x`. You will use this throughout the lab.
@@ -323,7 +322,7 @@ ip a show eth0
 
 Record the Kali VM's IP address:
 ```bash
-ip a show eth0
+ip a show
 ```
 
 > Note the `inet` address — it will look like `10.61.x.x`. You will use this throughout the lab.
@@ -362,10 +361,9 @@ sudo ufw show raw
 ```
 
 Before enabling UFW, understand what the current default policies mean:
-- `default: deny (incoming)` — if you enable with this setting, all incoming connections are blocked immediately
-- This includes your current SSH session
+- `default: deny (incoming)` — if you **enable** with this setting, all incoming connections are blocked immediately until you add allow rules. This is the whitelisting philosophy.
 
-> ⚠️ **Critical Warning**: Enabling UFW with default deny **before** adding an SSH rule will terminate your SSH session and lock you out remotely. Always add your SSH allow rule first. This is deliberate lesson material — you will experience what lockout looks like in Part D.
+> ⚠️ **Critical Warning**: Enabling UFW with default deny **before** adding a rule will terminate your session and lock you out remotely. Always add your allow rule first. This is deliberate lesson material — you will experience what lockout looks like in Part D.
 
 ---
 
@@ -389,11 +387,25 @@ Rather than following step-by-step instructions, you will be given a security re
 
 ---
 
-### 🎯 Scenario 1: Public Web Server
+### Scenario 1: Public Web Server
 
 **Requirement**: Your Ubuntu server hosts a public website. Anyone on the internet must be able to reach it on both port 80 (HTTP) and port 443 (HTTPS). SSH must also remain accessible from anywhere.
 
-Write and apply the three rules needed. Then enable UFW:
+Here is how we can enable HTTP access on port 80:
+```bash
+sudo ufw allow 80/tcp
+```
+
+**Verify from Kali:**
+```bash
+nmap <Ubuntu_IP>
+curl http://<Ubuntu_IP>
+```
+
+Now write and apply the other two rules needed for SSH and HTTPS access. Remember to specify the protocol!
+
+Then enable UFW:
+
 ```bash
 sudo ufw enable
 ```
@@ -407,7 +419,7 @@ curl http://<Ubuntu_IP>
 > Expected result: Ports 22, 80, and 443 should appear open. The Apache default page should load.
 
 <details>
-<summary>▶ Hint (try without first)</summary>
+<summary>▶ Hint (try without looking first)</summary>
 
 ```bash
 sudo ufw allow 22/tcp
@@ -421,26 +433,33 @@ sudo ufw allow 443/tcp
 
 ### 🎯 Scenario 2: Restricting SSH to a Subnet
 
-**Requirement**: Your security team decides that SSH should only be accessible from the management network `192.168.56.0/24`. Direct SSH from any other IP address must be blocked.
+**Requirement**: Your security team decides that SSH should only be accessible from the management network `10.61.83.0/24`. Direct SSH from any other IP address must be blocked.
 
 1. Modify your SSH rule to restrict it to the subnet.
 2. Test from Kali: Can you still SSH in? (The answer depends on whether Kali is on that subnet — determine this first.)
 
 ```bash
 # On Kali, check your IP:
-ip a show eth0
+ip a show
 ```
+Use the first three octets of the Kali IP address to determine the subnet it is on. For example, if the Kali IP is `10.61.83.119`, it belongs to the `10.61.83.0/24` subnet. In this case, `10.61.83.0/24` is your Kali subnet, and you should allow SSH from that subnet while blocking it from everywhere else.
 
 ```bash
 # On Ubuntu, remove the old open SSH rule and add the restricted one:
 sudo ufw delete allow 22/tcp
-sudo ufw allow from 192.168.56.0/24 to any port 22
+sudo ufw allow from <Kali_Subnet> to any port 22
+```
+
+```bash
+# Verify the new rule is in place:
+sudo ufw status numbered
 ```
 
 **Verify**: Check the UFW status and attempt SSH from Kali.
 
 ```bash
-sudo ufw status numbered
+# On Kali, try to SSH in with username "student" and the Ubuntu VM's IP address:
+ssh -l <username> <Ubuntu_IP>
 ```
 
 > **Discussion**: What is the trade-off between restricting SSH to a subnet versus leaving it open? What other control could you layer on top of SSH to improve security even if port 22 is accessible?
@@ -473,7 +492,7 @@ ping -c 3 <Ubuntu_IP>
 
 ### 🎯 Scenario 4: Application Profile
 
-UFW ships with built-in application profiles that map service names to ports. This is a quality-of-life feature that also reduces typos.
+UFW ships with built-in application profiles that map service names to ports. This is a usability feature that also reduces typos.
 
 List available profiles:
 ```bash
@@ -588,7 +607,7 @@ Find the iptables rule that corresponds to each UFW rule you created. Fill in th
 | UFW Rule | Equivalent iptables Rule |
 |---|---|
 | `ufw allow 80/tcp` | |
-| `ufw allow from 192.168.56.0/24 to any port 22` | |
+| `ufw allow from <Kali_Subnet> to any port 22` | |
 | `ufw allow in on lo` | |
 | `ufw allow in proto icmp` | |
 
@@ -699,7 +718,7 @@ Try running a software update from Ubuntu:
 sudo apt-get update
 ```
 
-It will fail or hang.
+Wait 30 seconds. If nothing happens, it will fail or hang.
 
 ### ✏️ Exercise C.4 — Diagnosis
 
@@ -759,7 +778,7 @@ Each log entry contains: source IP (`SRC=`), destination IP (`DST=`), protocol (
 
 ### ✏️ Exercise C.5 — Log a Port Scan
 
-From Kali, run a port scan:
+From Kali, run a quick port scan for first 100 ports:
 ```bash
 nmap -p 1-100 <Ubuntu_IP>
 ```
@@ -784,7 +803,7 @@ sudo iptables -P INPUT DROP
 sudo iptables -A INPUT -p udp --dport 80 -j ACCEPT         # Rule A
 sudo iptables -A INPUT -p tcp --dport 22 -j ACCEPT
 sudo iptables -A INPUT -p tcp --dport 443 -j ACCEPT
-sudo iptables -A INPUT -j ACCEPT                            # Rule B
+sudo iptables -A INPUT -j ACCEPT                           # Rule B
 sudo iptables -A INPUT -i lo -j ACCEPT
 sudo iptables -A INPUT -p icmp --icmp-type echo-request -j ACCEPT
 sudo iptables -A INPUT -m conntrack --ctstate ESTABLISHED,RELATED -j ACCEPT  # Rule C
@@ -821,7 +840,7 @@ sudo iptables -A INPUT -m conntrack --ctstate ESTABLISHED,RELATED -j ACCEPT  # R
 
 So far all your firewall rules have been applied using `iptables`, which only controls **IPv4** traffic. Linux has a completely separate tool — `ip6tables` — for **IPv6**.
 
-Most administrators configure iptables thoroughly and completely forget about ip6tables.
+Most administrators configure iptables thoroughly and completely forget about ip6tables. However, IPv6 is enabled by default on modern Linux distributions. This means that if you only configure iptables, your server may be wide open to IPv6 traffic — a huge blind spot. UFW does have some IPv6 support, but it is inconsistent. 
 
 ### The Challenge
 
@@ -833,7 +852,7 @@ nmap <Ubuntu_IPv4_IP>
 Now, find the Ubuntu VM's **IPv6 address**:
 ```bash
 # On Ubuntu:
-ip a show eth0
+ip a show
 # Look for the "inet6" line — it starts with fe80::
 ```
 
@@ -872,7 +891,7 @@ Verify from Kali with another IPv6 nmap scan.
 
 ## D.2 — Self-Lockout and Recovery
 
-> ⚠️ This exercise requires access to the VM console (not just SSH). If you only have SSH access to the Ubuntu VM, skip to the recovery steps and understand what *would* have happened.
+> ⚠️ This exercise requires access to the VM console through Proxmox. If you only have SSH access to the Ubuntu VM, skip to the recovery steps and understand what *would* have happened.
 
 This is one of the most common and painful mistakes a server administrator can make.
 
@@ -897,7 +916,7 @@ You are now locked out via SSH.
 
 ### Recovery
 
-**If you have console access** (VM display):
+**If you have console access** (VM Proxmox console):
 ```bash
 # Re-open SSH via console:
 sudo iptables -I INPUT 1 -p tcp --dport 22 -j ACCEPT
