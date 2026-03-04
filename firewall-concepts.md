@@ -1150,26 +1150,6 @@ sudo ufw disable
 
 ---
 
----
-
-## Summary: What You Should Be Able to Do Now
-
-| Skill | Verified? |
-|---|---|
-| Identify which chain (INPUT/OUTPUT/FORWARD) handles a given traffic scenario | |
-| Map common services to their ports and protocols | |
-| Explain the difference between a whitelist and blacklist firewall philosophy | |
-| Predict what happens when firewall rules are applied out of order | |
-| Configure a UFW ruleset for a given scenario from scratch | |
-| Read and interpret raw iptables rules | |
-| Write iptables rules directly without relying on UFW | |
-| Explain what `ESTABLISHED,RELATED` means and why it is necessary | |
-| Identify the IPv6 blind spot and close it with ip6tables | |
-| Diagnose and recover from a self-imposed SSH lockout | |
-| Debug a broken ruleset by reading rules without running them | |
-
----
-
 ## Additional Resources
 
 - [UFW Manual](https://manpages.ubuntu.com/manpages/focal/man8/ufw.8.html)
@@ -1178,7 +1158,7 @@ sudo ufw disable
 - [nftables — the successor to iptables](https://wiki.nftables.org/wiki-nftables/index.php/Main_Page)
 - [iptables cheat sheet](https://geekflare.com/common-iptables-commands/)
 - [Firewall evasion techniques with Nmap](https://nmap.org/book/firewall-subversion.html) — understand how attackers work around firewalls
-- [ICMP tunneling explained](https://www.sans.org/white-papers/33) — why allowing ICMP has risks
+- [ICMP tunneling](https://www.sans.org/white-papers/477) — how ICMP can be abused to bypass firewalls
 
 > Firewalls are essential but not sufficient. A determined adversary with legitimate access to an open port (e.g., port 80) can still attack the application behind it. Firewalls reduce the attack surface — they do not eliminate it. Layer firewalls with application-level controls, intrusion detection, and secure coding practices for real defense in depth.
 
