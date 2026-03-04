@@ -1,9 +1,9 @@
 # Firewalls: Concepts to Configuration
 
-Firewalls are one of the oldest and most fundamental tools in a network defender's toolkit. But writing rules without understanding the model behind them leads to gaps, misconfigurations, and a false sense of security. This lab is structured to build understanding *before* configuration, so that when something breaks — and it will — you have a mental model to debug with.
+Firewalls are one of the oldest and most fundamental tools in a network defender's toolkit. But writing rules without understanding the model behind them leads to gaps, misconfigurations, and a false sense of security. This lab is structured to build understanding *before* configuration, so that when something breaks (it often does!) you have a mental model to debug with.
 
 ### Learning Objectives
-- Reason about firewall chains, policies, and rule ordering *before* touching a terminal
+- Reason about firewall chains, policies, and rule ordering
 - Configure and verify firewall rules using UFW (Uncomplicated Firewall)
 - Translate UFW rules into raw `iptables` commands to see what is happening underneath
 - Deliberately reproduce — and then fix — common firewall misconfigurations
@@ -16,24 +16,9 @@ Firewalls are one of the oldest and most fundamental tools in a network defender
 
 ---
 
-## Lab Environment
-
-This lab uses two virtual machines that can communicate over a shared host-only network:
-
-| VM | Role | Notes |
-|---|---|---|
-| **Ubuntu Server** | The machine being defended | Apache2 web server, SSH enabled |
-| **Kali Linux** | The observer / attacker perspective | Used to verify what is and is not reachable |
-
-> Before beginning, boot both VMs and record the Ubuntu VM's IP address using `ifconfig` or `ip a`. It should begin with `192.168`. You will need it throughout the lab.
-
----
-
----
-
 # Part A: Concepts & Association
 
-> **No VM required.** Work through these exercises before touching a terminal. Answer the questions in writing — discussion with a classmate is encouraged.
+> **No VM required.** Work through these exercises before touching a terminal. Answer the questions in writing to help with comprehension. 
 
 The goal of this section is to build the mental model that makes the hands-on sections intuitive rather than mechanical.
 
@@ -47,11 +32,11 @@ The Linux netfilter firewall processes packets through three built-in **chains**
                         ┌─────────────────────────────────────┐
                         │           Your Machine              │
                         │                                     │
- Incoming Packet ──────►│  [INPUT chain]   → Local Process   │
+ Incoming Packet ──────►│  [INPUT chain]   → Local Process    │
                         │                                     │
- Local Process  ───────►│  [OUTPUT chain]  → Outgoing Packet ├──────► Network
+ Local Process  ───────►│  [OUTPUT chain]  → Outgoing Packet  ├──────► Network
                         │                                     │
- Forwarded Packet ─────►│  [FORWARD chain] ──────────────────├──────► Elsewhere
+ Forwarded Packet ─────►│  [FORWARD chain] ───────────────────├──────► Elsewhere
                         │                                     │
                         └─────────────────────────────────────┘
 ```
@@ -68,9 +53,9 @@ For each scenario below, write which chain(s) are relevant. Discuss your reasoni
 
 | # | Scenario | Chain(s) |
 |---|---|---|
-| 1 | An external user requests your Apache web page | |
-| 2 | Your Ubuntu server runs `apt-get update` to download package lists | |
-| 3 | A ping (`echo-request`) arrives from the Kali VM | |
+| 1 | An external user requests a web page on your server | |
+| 2 | Your linux server runs `apt-get update` to download package lists | |
+| 3 | A ping (`echo-request`) arrives from another machine | |
 | 4 | Your server relays traffic between two other machines (acting as a router) | |
 | 5 | Your server's local MySQL process connects to `localhost:3306` | |
 | 6 | An SSH connection attempt arrives on port 22 | |
@@ -82,7 +67,7 @@ For each scenario below, write which chain(s) are relevant. Discuss your reasoni
 |---|---|---|
 | 1 | External user requests Apache web page | **INPUT** (the SYN arrives), **OUTPUT** (the response leaves) |
 | 2 | Server runs `apt-get update` | **OUTPUT** (DNS + HTTP requests leave), **INPUT** (responses arrive — but handled by ESTABLISHED/RELATED, not new rules) |
-| 3 | Ping arrives from Kali | **INPUT** |
+| 3 | Ping arrives from another machine | **INPUT** |
 | 4 | Traffic relayed through this machine | **FORWARD** |
 | 5 | Local MySQL on localhost | **OUTPUT** (process sends to loopback), **INPUT** (loopback receives it) — both on the `lo` interface |
 | 6 | SSH connection attempt on port 22 | **INPUT** |
@@ -177,7 +162,7 @@ Answer these questions before moving on:
 
 ## A.4 — Rule Ordering Puzzles
 
-Rules are evaluated **top to bottom**. The **first matching rule wins** — remaining rules are not evaluated. This is one of the most common sources of firewall bugs.
+Firewall Rules are evaluated **top to bottom**. The **first matching rule wins** — remaining rules are not evaluated. This is one of the most common sources of firewall bugs.
 
 ### ✏️ Exercise A.4 — Predict the Outcome
 
@@ -223,7 +208,7 @@ num  target  prot  source    destination   extra
 ```
 
 - You run `apt-get update` from Ubuntu. It contacts an Ubuntu mirror on port 80. Does the update succeed?
-- Can you be pinged?
+- Can you be pinged from Ubuntu?
 - What critical rule is missing?
 
 ---
@@ -251,7 +236,7 @@ num  target  prot  source    destination   extra
 **Puzzle 2:** Rule 1 matches *every* packet immediately. Rules 2 and 3 are dead code — never evaluated. All traffic is accepted. The entire ruleset is effectively useless with a blanket ACCEPT at position 1.
 
 **Puzzle 3:** Two things are broken:
-- `apt-get update` fails — the *response packets* from the Ubuntu mirror arrive as new connections on ephemeral ports, not port 80. Without an `ESTABLISHED,RELATED` rule, the response packets hit the DROP policy.
+- `apt-get update` fails — the *response packets* from the Ubuntu mirror arrive as new connections on ephemeral ports, not port 80. Without an `ESTABLISHED,RELATED` rule, the response packets hit the DROP default policy on the INPUT chain.
 - ICMP is not permitted — pings fail.
 The missing rule is: `ACCEPT all ctstate ESTABLISHED,RELATED` — this allows return traffic for connections your machine initiated.
 
@@ -261,7 +246,7 @@ The missing rule is: `ACCEPT all ctstate ESTABLISHED,RELATED` — this allows re
 - Loopback (local inter-process communication)
 - ICMP echo (ping)
 - Return traffic for outbound connections
-- The only concern: SSH is open from *any* source. A production server should restrict port 22 to a specific management subnet. Also, IPv6 is not addressed at all.
+- The only concern: SSH is open from *any* source. A production server should restrict port 22 to a specific management subnet. Also, IPv6 is not addressed at all!
 
 </details>
 
@@ -286,11 +271,22 @@ Write a plain-English firewall rule that satisfies each requirement below. You d
 
 ---
 
+# Part B: UFW Hands-On (**VMs required.**)
+
 ---
 
-# Part B: UFW Hands-On
+## Lab Environment
 
-> **VMs required.** You will configure the Ubuntu VM's firewall using UFW (Uncomplicated Firewall) and verify your work from the Kali VM.
+This lab uses two virtual machines that can communicate over a shared host-only network:
+
+| VM | Role | Notes |
+|---|---|---|
+| **Ubuntu Server** | The machine being defended | Apache2 web server, SSH enabled |
+| **Kali Linux** | The observer / attacker perspective | Used to verify what is and is not reachable |
+
+---
+
+> You will configure the Ubuntu VM's firewall using UFW (Uncomplicated Firewall) and verify your work from the Kali VM.
 
 UFW is a command-line frontend for `iptables` that trades raw power for clarity. Rather than learning `iptables` syntax first, UFW lets you focus on *what* you want to allow or deny. In Part C you will look at the iptables rules UFW generates underneath.
 
@@ -300,15 +296,20 @@ UFW is a command-line frontend for `iptables` that trades raw power for clarity.
 
 ### On the Ubuntu VM:
 
-Install Apache and start it:
+Install Apache and Openssh and start it:
 ```bash
+sudo apt-get purge openssh-server
+sudo apt-get purge openssh-client
+sudo apt-get purge apache2
+sudo apt-get install openssh-server -y
 sudo apt-get install apache2 -y
-sudo systemctl start apache2
+sudo service apache2 start 
 ```
 
-Check that Apache is running:
+Check that Apache and Openssh are running:
 ```bash
-sudo systemctl status apache2
+sudo service apache2 status
+sudo service ssh status
 ```
 
 Record the Ubuntu VM's IP address:
@@ -316,9 +317,16 @@ Record the Ubuntu VM's IP address:
 ip a show eth0
 ```
 
-> Note the `inet` address — it will look like `192.168.x.x`. You will use this throughout the lab.
+> Note the `inet` address — it will look like `10.61.x.x`. You will use this throughout the lab.
 
 ### On the Kali VM:
+
+Record the Kali VM's IP address:
+```bash
+ip a show eth0
+```
+
+> Note the `inet` address — it will look like `10.61.x.x`. You will use this throughout the lab.
 
 Confirm you can reach the Ubuntu VM before any firewall changes:
 ```bash
@@ -336,8 +344,9 @@ Record which ports are currently open. You should see at least port **22 (SSH)**
 
 ### On the Ubuntu VM:
 
-Install UFW if it is not already present:
+Install UFW:
 ```bash
+sudo apt-get purge ufw -y
 sudo apt-get install ufw -y
 ```
 
