@@ -363,7 +363,7 @@ sudo ufw show raw
 Before enabling UFW, understand what the current default policies mean:
 - `default: deny (incoming)` — if you **enable** with this setting, all incoming connections are blocked immediately until you add allow rules. This is the whitelisting philosophy.
 
-> ⚠️ **Critical Warning**: Enabling UFW with default deny **before** adding a rule will terminate your session and lock you out remotely. Always add your allow rule first. This is deliberate lesson material — you will experience what lockout looks like in Part D.
+> **Critical Warning**: Enabling UFW with default deny **before** adding a rule will terminate your session and lock you out remotely. Always add your allow rule first. This is deliberate lesson material — you will experience what lockout looks like in Part D.
 
 ---
 
@@ -431,7 +431,7 @@ sudo ufw allow 443/tcp
 
 ---
 
-### 🎯 Scenario 2: Restricting SSH to a Subnet
+### Scenario 2: Restricting SSH to a Subnet
 
 **Requirement**: Your security team decides that SSH should only be accessible from the management network `10.61.83.0/24`. Direct SSH from any other IP address must be blocked.
 
@@ -466,7 +466,7 @@ ssh -l <username> <Ubuntu_IP>
 
 ---
 
-### 🎯 Scenario 3: Adding ICMP and Loopback
+### Scenario 3: Adding ICMP and Loopback
 
 **Requirement**: Allow ICMP echo requests (ping) so that network monitoring tools can verify reachability. Also ensure local processes can communicate with each other on the loopback interface.
 
@@ -490,7 +490,7 @@ ping -c 3 <Ubuntu_IP>
 
 ---
 
-### 🎯 Scenario 4: Application Profile
+### Scenario 4: Application Profile
 
 UFW ships with built-in application profiles that map service names to ports. This is a usability feature that also reduces typos.
 
@@ -521,7 +521,7 @@ sudo ufw status verbose
 
 ---
 
-### 🎯 Scenario 5: Logging
+### Scenario 5: Logging
 
 Enable UFW logging to track denied connection attempts:
 ```bash
@@ -600,7 +600,7 @@ User-defined rules (your `ufw allow` commands) land in `ufw-user-input`. Inspect
 sudo iptables -nL ufw-user-input --line-numbers
 ```
 
-### ✏️ Exercise C.1
+### Exercise C.1
 
 Find the iptables rule that corresponds to each UFW rule you created. Fill in the table:
 
@@ -628,7 +628,7 @@ iptables  <operation>  <chain>  <match criteria>  <target>
 | `match criteria` | Conditions to match a packet | `-p tcp`, `--dport 80`, `-s 192.168.1.0/24`, `-i eth0`, `-m conntrack --ctstate` |
 | `target` | What to do with matching packets | `-j ACCEPT`, `-j DROP`, `-j REJECT`, `-j LOG` |
 
-### ✏️ Exercise C.2 — Command Parsing
+### Exercise C.2 — Command Parsing
 
 Break each iptables command below into its four components:
 
@@ -720,7 +720,7 @@ sudo apt-get update
 
 Wait 30 seconds. If nothing happens, it will fail or hang.
 
-### ✏️ Exercise C.4 — Diagnosis
+### Exercise C.4 — Diagnosis
 
 Before looking at the answer, explain in writing why `apt-get update` fails given the current ruleset.
 
@@ -776,7 +776,7 @@ sudo dmesg | grep -i "TELNET_ATTEMPT"
 
 Each log entry contains: source IP (`SRC=`), destination IP (`DST=`), protocol (`PROTO=`), source port (`SPT=`), destination port (`DPT=`), and more.
 
-### ✏️ Exercise C.5 — Log a Port Scan
+### Exercise C.5 — Log a Port Scan
 
 From Kali, run a quick port scan for first 100 ports:
 ```bash
@@ -891,7 +891,7 @@ Verify from Kali with another IPv6 nmap scan.
 
 ## D.2 — Self-Lockout and Recovery
 
-> ⚠️ This exercise requires access to the VM console through Proxmox. If you only have SSH access to the Ubuntu VM, skip to the recovery steps and understand what *would* have happened.
+> ⚠️ This exercise requires access to the VM console through Proxmox. If you only had SSH access to the Ubuntu VM (for example from the Kali VM), then you would skip to the recovery steps and understand what *would* have happened.
 
 This is one of the most common and painful mistakes a server administrator can make.
 
@@ -901,7 +901,7 @@ On Ubuntu, flush all INPUT rules and set the default policy to DROP — **in the
 ```bash
 sudo iptables -P INPUT DROP
 sudo iptables -F INPUT
-# SSH connection drops here immediately if you are connected via SSH
+# If you had a SSH connection active from the Kali Machine, the connection drops here immediately
 ```
 
 Or equivalently, the mistake made when enabling UFW without adding an SSH rule first:
@@ -998,7 +998,7 @@ ping 8.8.8.8
 curl https://example.com
 ```
 
-### ✏️ Exercise D.3
+### Exercise D.3
 
 1. Try to initiate an SSH *from* Ubuntu to Kali (`ssh <Kali_IP>`). What happens and why?
 2. Try `curl http://example.com:8080`. What happens and why?
@@ -1008,7 +1008,7 @@ curl https://example.com
 
 ## D.4 — Rule Ordering Bug Hunt
 
-The following complete firewall script has been "helpfully" reordered by a colleague. The intended behavior is described in the comments. Find and fix all ordering problems.
+The following complete firewall script has been "helpfully" reordered by a sys admin colleague. The intended behavior is described in the comments. Find and fix all ordering problems.
 
 ```bash
 #!/bin/bash
@@ -1086,8 +1086,6 @@ sudo iptables -P INPUT DROP
 ```
 
 </details>
-
----
 
 ---
 
