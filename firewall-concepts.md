@@ -6,7 +6,7 @@ Firewalls are one of the oldest and most fundamental tools in a network defender
 - Reason about firewall chains, policies, and rule ordering
 - Configure and verify firewall rules using UFW (Uncomplicated Firewall)
 - Translate UFW rules into raw `iptables` commands to see what is happening underneath
-- Deliberately reproduce — and then fix — common firewall misconfigurations
+- Deliberately reproduce, and then fix common firewall misconfigurations
 - Discover and close security gaps in both IPv4 and IPv6 through guided exploration
 
 ### Cybersecurity First Principles
