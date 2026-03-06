@@ -11,7 +11,7 @@ Firewalls are one of the oldest and most fundamental tools in a network defender
 
 ### Cybersecurity First Principles
 - **Minimization**: Turn off what is not needed. Every open port is an attack surface.
-- **Least Privilege**: Grant only the access required for a task to function — nothing more.
+- **Least Privilege**: Grant only the access required for a task to function, nothing more.
 - **Defense in Depth**: Firewalls are one layer. They slow attackers down; they do not stop a determined adversary alone.
 
 ---
@@ -72,7 +72,7 @@ For each scenario below, write which chain(s) are relevant. Discuss your reasoni
 | 5 | Local MySQL on localhost | **OUTPUT** (process sends to loopback), **INPUT** (loopback receives it) — both on the `lo` interface |
 | 6 | SSH connection attempt on port 22 | **INPUT** |
 
-The key insight: most server hardening focuses on the **INPUT** chain. The **OUTPUT** chain is frequently forgotten — yet leaving it uncontrolled means a compromised server can phone home, exfiltrate data, or participate in a botnet without restriction.
+The key insight: most server hardening focuses on the **INPUT** chain. The **OUTPUT** chain is frequently forgotten, yet leaving it uncontrolled means a compromised server can phone home, exfiltrate data, or participate in a botnet without restriction.
 
 </details>
 
@@ -136,7 +136,7 @@ Answer these questions before moving on:
 
 1. You are configuring a public web server for a small company. Which default policy makes more sense for the INPUT chain? Why?
 
-2. A developer argues: *"Blacklisting is fine — I'll just block the ports I know are dangerous."* What is the fundamental flaw in this reasoning?
+2. A developer argues: *"Blacklisting is fine, I'll just block the ports I know are dangerous."* What is the fundamental flaw in this reasoning?
 
 3. With a DROP default policy, what happens to a packet sent to port 8080 if there is no rule matching it?
 
@@ -149,7 +149,7 @@ Answer these questions before moving on:
 
 2. The flaw is **lack of fail-safe defaults and complete mediation when a port is not included in the blacklist**: A whitelisting approach rejects anything not explicitly permitted, while making sure that all traffic is filtered by the default policy or specific rules.
 
-3. The packet is **silently dropped** — the sender gets no response. From the sender's perspective, the port appears filtered (as opposed to closed, which sends a TCP RST).
+3. The packet is **silently dropped**, the sender gets no response. From the sender's perspective, the port appears filtered (as opposed to closed, which sends a TCP RST).
 
 4. `DROP` discards the packet silently. `REJECT` sends an ICMP "port unreachable" error back to the sender. `DROP` is preferred because:
    - It gives no information to a scanner about whether a host exists. This makes reconnaissance more difficult.
@@ -162,11 +162,11 @@ Answer these questions before moving on:
 
 ## A.4 — Rule Ordering Puzzles
 
-Firewall Rules are evaluated **top to bottom**. The **first matching rule wins** — remaining rules are not evaluated. This is one of the most common sources of firewall bugs. Finally, the default policy is evaluated only if no rules match. The default policy is not a catch-all that applies to every packet — **it only applies to packets that fail to match any rule.** In the puzzles below the default policy is shown at the top of the chain for clarity, but remember that it is only evaluated if no rules match.
+Firewall Rules are evaluated **top to bottom**. The **first matching rule wins**, remaining rules are not evaluated. This is one of the most common sources of firewall bugs. Finally, the default policy is evaluated only if no rules match. The default policy is not a catch-all that applies to every packet, **it only applies to packets that fail to match any rule.** In the puzzles below the default policy is shown at the top of the chain for clarity, but remember that it is only evaluated if no rules match.
 
 ### Exercise A.4 — Predict the Outcome
 
-For each ruleset below, predict what happens. Do not test yet — reason it out on paper first. Be specific about *why*.
+For each ruleset below, predict what happens. Do not test yet, reason it out on paper first. Be specific about *why*.
 
 ---
 
@@ -232,12 +232,12 @@ num  target  prot  source    destination   extra
 
 **Puzzle 1:** Rule 1 matches SSH packets first and DROPs them. Rule 2 is never reached. SSH is blocked. Swapping them makes SSH accessible, since ACCEPT fires first.
 
-**Puzzle 2:** Rule 1 matches *every* packet immediately. Rules 2 and 3 are dead code — never evaluated. All traffic is accepted. The entire ruleset is effectively useless with a blanket ACCEPT at position 1.
+**Puzzle 2:** Rule 1 matches *every* packet immediately. Rules 2 and 3 are dead code, never evaluated. All traffic is accepted. The entire ruleset is effectively useless with a blanket ACCEPT at position 1.
 
 **Puzzle 3:** Two things are broken:
-- `apt-get update` fails — the *response packets* from the Ubuntu mirror arrive as new connections on ephemeral ports, not port 80. Without an `ESTABLISHED,RELATED` rule, the response packets hit the DROP default policy on the INPUT chain.
-- ICMP is not permitted — pings fail.
-The missing rule is: `ACCEPT all ctstate ESTABLISHED,RELATED` — this allows return traffic for connections your machine initiated.
+- `apt-get update` fails, the *response packets* from the Ubuntu mirror arrive as new connections on ephemeral ports, not port 80. Without an `ESTABLISHED,RELATED` rule, the response packets hit the DROP default policy on the INPUT chain.
+- ICMP is not permitted, pings fail.
+The missing rule is: `ACCEPT all ctstate ESTABLISHED,RELATED`, this allows return traffic for connections your machine initiated.
 
 **Puzzle 4:** This ruleset is functional and well-structured. It allows:
 - Web traffic (80, 443)
@@ -255,7 +255,7 @@ The missing rule is: `ACCEPT all ctstate ESTABLISHED,RELATED` — this allows re
 
 ### Exercise A.5
 
-Write a plain-English firewall rule that satisfies each requirement below. You do not need to write exact command syntax yet — describe the rule in terms of protocol, port, source, destination, and action.
+Write a plain-English firewall rule that satisfies each requirement below. You do not need to write exact command syntax yet, describe the rule in terms of protocol, port, source, destination, and action.
 
 | # | Requirement | Your Rule Description |
 |---|---|---|
@@ -266,7 +266,7 @@ Write a plain-English firewall rule that satisfies each requirement below. You d
 | 5 | Prevent your server from initiating any outbound connections (except responses) | |
 | 6 | Allow HTTPS but redirect HTTP requests to HTTPS instead of blocking them | |
 
-> Note: Item 6 is a trick question from a pure firewall perspective — a packet-filtering firewall cannot redirect traffic. That requires a proxy or application-layer control. A firewall can only allow or deny.
+> Note: Item 6 is a trick question from a pure firewall perspective, a packet-filtering firewall cannot redirect traffic. That requires a proxy or application-layer control. A firewall can only allow or deny.
 
 ---
 
@@ -366,9 +366,9 @@ sudo ufw show raw
 ```
 
 Before enabling UFW, understand what the current default policies mean:
-- `default: deny (incoming)` — if you **enable** with this setting, all incoming connections are blocked immediately until you add allow rules. This is the whitelisting philosophy.
+- `default: deny (incoming)`, if you **enable** with this setting, all incoming connections are blocked immediately until you add allow rules. This is the whitelisting philosophy.
 
-> **Critical Warning**: Enabling UFW with default deny **before** adding a rule will terminate your session and lock you out remotely. Always add your allow rule first. This is deliberate lesson material — you will experience what lockout looks like in Part D.
+> **Critical Warning**: Enabling UFW with default deny **before** adding a rule will terminate your session and lock you out remotely. Always add your allow rule first. This is deliberate lesson material, you will experience what lockout looks like in Part D.
 
 ---
 
@@ -403,7 +403,7 @@ sudo ufw allow 80/tcp
 
 Now write and apply the other two rules needed for SSH and HTTPS access before enabling UFW. Remember to specify the protocol!
 
-> ⚠️ Add **all** your rules before running `ufw enable`. Enabling UFW enforces the default deny policy immediately — if you have not added an SSH rule yet, you will be locked out.
+> ⚠️ Add **all** your rules before running `ufw enable`. Enabling UFW enforces the default deny policy immediately, if you have not added an SSH rule yet, you will be locked out.
 
 Once all three rules are in place, enable UFW:
 ```bash
@@ -481,7 +481,7 @@ Verify from Kali:
 ping -c 3 <Ubuntu_IP>
 ```
 
-> **Discussion**: Is enabling ICMP a security risk? What information does a ping response reveal to an attacker? Look up "ICMP tunneling" — how can ICMP be abused?
+> **Discussion**: Is enabling ICMP a security risk? What information does a ping response reveal to an attacker? Look up "ICMP tunneling", how can ICMP be abused?
 
 ---
 
@@ -583,7 +583,7 @@ sudo iptables -nL --line-numbers -v
 
 The `-v` flag adds packet/byte counters. The `--line-numbers` flag shows rule positions.
 
-You will see UFW has created multiple chains beyond just INPUT, OUTPUT, and FORWARD — it adds chains like `ufw-before-input`, `ufw-user-input`, `ufw-after-input`, etc. UFW's chain architecture looks like this:
+You will see UFW has created multiple chains beyond just INPUT, OUTPUT, and FORWARD, it adds chains like `ufw-before-input`, `ufw-user-input`, `ufw-after-input`, etc. UFW's chain architecture looks like this:
 
 ```
 Packet arrives → [INPUT] → ufw-before-input → ufw-user-input → ufw-after-input → ufw-reject-input
@@ -726,9 +726,9 @@ Before looking at the answer, explain in writing why `apt-get update` fails give
 <details>
 <summary>▶ Explanation</summary>
 
-`apt-get update` causes Ubuntu to send outbound HTTP/DNS requests to package repositories. Those requests leave fine (the OUTPUT chain has no restrictions). However, the **response packets** coming back from the repository servers arrive as *new connections from external sources* — and the INPUT chain has no rule allowing them. They hit the DROP default policy.
+`apt-get update` causes Ubuntu to send outbound HTTP/DNS requests to package repositories. Those requests leave fine (the OUTPUT chain has no restrictions). However, the **response packets** coming back from the repository servers arrive as *new connections from external sources*, and the INPUT chain has no rule allowing them. They hit the DROP default policy.
 
-The fix is to allow packets that belong to *already established* connections — connections that *your machine initiated*:
+The fix is to allow packets that belong to *already established* connections, connections that *your machine initiated*:
 
 ```bash
 sudo iptables -A INPUT -m conntrack --ctstate ESTABLISHED,RELATED -j ACCEPT
@@ -736,7 +736,7 @@ sudo iptables -A INPUT -m conntrack --ctstate ESTABLISHED,RELATED -j ACCEPT
 
 The `conntrack` module tracks connection state. A packet with state `ESTABLISHED` belongs to a connection already in progress. `RELATED` covers auxiliary connections opened as part of an established session (e.g., FTP data channels).
 
-**Position matters**: This rule should typically come *after* specific rules but *before* the default policy. Where it sits in your current chain is fine, but adding it at the very top would make it slightly more efficient — it matches the majority of ongoing traffic.
+**Position matters**: This rule should typically come *after* specific rules but *before* the default policy. Where it sits in your current chain is fine, but adding it at the very top would make it slightly more efficient, it matches the majority of ongoing traffic.
 
 </details>
 
@@ -750,7 +750,7 @@ sudo apt-get update
 
 ## C.5 — Logging with the LOG Target
 
-Unlike `ACCEPT`, `DROP`, and `REJECT`, the `LOG` target is **non-terminating** — rule evaluation continues after logging. This means you use two consecutive rules with the same matching criteria: first LOG, then DROP.
+Unlike `ACCEPT`, `DROP`, and `REJECT`, the `LOG` target is **non-terminating**, rule evaluation continues after logging. This means you use two consecutive rules with the same matching criteria: first LOG, then DROP.
 
 Log all Telnet connection attempts:
 ```bash
@@ -762,7 +762,7 @@ From Kali, trigger this rule:
 ```bash
 telnet <Ubuntu_IP>
 ```
-(The connection will fail — that is expected.)
+(The connection will fail, that is expected.)
 
 On Ubuntu, view the kernel log to see the logged attempt:
 ```bash
@@ -789,7 +789,7 @@ On Ubuntu, examine the kernel log. For each entry you find:
 
 Below is a ruleset that a junior administrator wrote for a web server. It has **three distinct bugs**.
 
-Do not test it yet — identify the bugs by reading the rules alone. Then describe what symptom each bug would cause in production.
+Do not test it yet, identify the bugs by reading the rules alone. Then describe what symptom each bug would cause in production.
 
 ```bash
 # Junior admin's firewall script
@@ -833,9 +833,9 @@ sudo iptables -A INPUT -m conntrack --ctstate ESTABLISHED,RELATED -j ACCEPT  # R
 
 ## D.1 — The IPv6 Blind Spot
 
-So far all your firewall rules have been applied using `iptables`, which only controls **IPv4** traffic. Linux has a completely separate tool — `ip6tables` — for **IPv6**.
+So far all your firewall rules have been applied using `iptables`, which only controls **IPv4** traffic. Linux has a completely separate tool, `ip6tables`, for **IPv6**.
 
-Most administrators configure iptables thoroughly and completely forget about ip6tables. However, IPv6 is enabled by default on modern Linux distributions. This means that if you only configure iptables, your server may be wide open to IPv6 traffic — a huge blind spot. UFW does support IPv6 when `IPV6=yes` is set in `/etc/default/ufw`, but in this section we are working with raw iptables directly, which requires a separate `ip6tables` ruleset.
+Most administrators configure iptables thoroughly and completely forget about ip6tables. However, IPv6 is enabled by default on modern Linux distributions. This means that if you only configure iptables, your server may be wide open to IPv6 traffic, a huge blind spot. UFW does support IPv6 when `IPV6=yes` is set in `/etc/default/ufw`, but in this section we are working with raw iptables directly, which requires a separate `ip6tables` ruleset.
 
 ### The Challenge
 
@@ -873,7 +873,7 @@ sudo ip6tables -A INPUT -m conntrack --ctstate ESTABLISHED,RELATED -j ACCEPT
 
 Verify from Kali with another IPv6 nmap scan.
 
-> **Discussion**: In a production environment, what tooling or process would ensure that IPv4 and IPv6 firewall rules are kept in sync? Research `nftables` — how does it unify both in a single ruleset?
+> **Discussion**: In a production environment, what tooling or process would ensure that IPv4 and IPv6 firewall rules are kept in sync? Research `nftables`, how does it unify both in a single ruleset?
 
 ---
 
@@ -885,7 +885,7 @@ This is one of the most common and painful mistakes a server administrator can m
 
 ### Reproducing the Lockout
 
-On Ubuntu, flush all INPUT rules and set the default policy to DROP — **in the wrong order**:
+On Ubuntu, flush all INPUT rules and set the default policy to DROP, **in the wrong order**:
 ```bash
 sudo iptables -P INPUT DROP
 sudo iptables -F INPUT
@@ -1054,7 +1054,7 @@ sudo iptables -A INPUT -p icmp --icmp-type echo-request -j ACCEPT
 
 **Problem 2**: The `ESTABLISHED,RELATED` rule appears before most ACCEPT rules. While not functionally catastrophic (it still allows return traffic correctly), convention and clarity dictate placing it near the end of specific rules, just before the default policy handles anything unmatched.
 
-**Problem 3**: `-P INPUT DROP` sets the default policy. Policies are set independently of rules and take effect regardless of where this line appears in the script. However, placing it after `-F INPUT` (flush) and before adding rules means that during the brief window while rules are being added, the INPUT chain has DROP policy with no rules — any connection made during this moment (including your SSH session) will be dropped. The correct approach is to set the policy **after** all rules are added, or use `iptables-restore` to apply the entire ruleset atomically.
+**Problem 3**: `-P INPUT DROP` sets the default policy. Policies are set independently of rules and take effect regardless of where this line appears in the script. However, placing it after `-F INPUT` (flush) and before adding rules means that during the brief window while rules are being added, the INPUT chain has DROP policy with no rules, any connection made during this moment (including your SSH session) will be dropped. The correct approach is to set the policy **after** all rules are added, or use `iptables-restore` to apply the entire ruleset atomically.
 
 **Corrected script:**
 ```bash
@@ -1148,13 +1148,13 @@ sudo ufw disable
 
 - [UFW Manual](https://manpages.ubuntu.com/manpages/focal/man8/ufw.8.html)
 - [Ubuntu iptables Wiki](https://help.ubuntu.com/community/IptablesHowTo)
-- [Netfilter — the project behind iptables](https://www.netfilter.org/)
-- [nftables — the successor to iptables](https://wiki.nftables.org/wiki-nftables/index.php/Main_Page)
+- [Netfilter, the project behind iptables](https://www.netfilter.org/)
+- [nftables, the successor to iptables](https://wiki.nftables.org/wiki-nftables/index.php/Main_Page)
 - [iptables cheat sheet](https://geekflare.com/common-iptables-commands/)
-- [Firewall evasion techniques with Nmap](https://nmap.org/book/firewall-subversion.html) — understand how attackers work around firewalls
-- [ICMP tunneling](https://www.sans.org/white-papers/477) — how ICMP can be abused to bypass firewalls
+- [Firewall evasion techniques with Nmap](https://nmap.org/book/firewall-subversion.html), understand how attackers work around firewalls
+- [ICMP tunneling](https://www.sans.org/white-papers/477), how ICMP can be abused to bypass firewalls
 
-> Firewalls are essential but not sufficient. A determined adversary with legitimate access to an open port (e.g., port 80) can still attack the application behind it. Firewalls reduce the attack surface — they do not eliminate it. Layer firewalls with application-level controls, intrusion detection, and secure coding practices for real defense in depth.
+> Firewalls are essential but not sufficient. A determined adversary with legitimate access to an open port (e.g., port 80) can still attack the application behind it. Firewalls reduce the attack surface, they do not eliminate it. Layer firewalls with application-level controls, intrusion detection, and secure coding practices for real defense in depth.
 
 ---
 
