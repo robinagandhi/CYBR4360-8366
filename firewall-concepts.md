@@ -47,7 +47,7 @@ The Linux netfilter firewall processes network packets through three built-in **
 | **OUTPUT** | A packet is leaving *from a process on this machine* | Controlling what your server is allowed to initiate |
 | **FORWARD** | A packet is *passing through* this machine to another | Protecting a network when this machine is a router |
 
-### ✏️ Exercise A.1 — Chain Identification
+### Exercise A.1 — Chain Identification
 
 For each scenario below, write which chain(s) are relevant. Discuss your reasoning.
 
@@ -82,7 +82,7 @@ The key insight: most server hardening focuses on the **INPUT** chain. The **OUT
 
 Every network service runs on a specific **port** using either **TCP** or **UDP**. Writing a firewall rule without knowing this information is guessing. Memorizing the most common ones is a professional baseline.
 
-### ✏️ Exercise A.2 — Fill in the Blanks
+### Exercise A.2 — Fill in the Blanks
 
 Complete the table. If you are unsure, reason it out: is the service connection-oriented (TCP) or fire-and-forget (UDP)?
 
@@ -130,7 +130,7 @@ There are two philosophies for firewall default policies:
 | **Blacklisting** | ACCEPT | Allow everything; explicitly block known bad traffic |
 | **Whitelisting** | DROP | Block everything; explicitly allow known good traffic |
 
-### ✏️ Exercise A.3 — Policy Reasoning
+### Exercise A.3 — Policy Reasoning
 
 Answer these questions before moving on:
 
@@ -164,7 +164,7 @@ Answer these questions before moving on:
 
 Firewall Rules are evaluated **top to bottom**. The **first matching rule wins** — remaining rules are not evaluated. This is one of the most common sources of firewall bugs. Finally, the default policy is evaluated only if no rules match. The default policy is not a catch-all that applies to every packet — **it only applies to packets that fail to match any rule.** In the puzzles below the default policy is shown at the top of the chain for clarity, but remember that it is only evaluated if no rules match.
 
-### ✏️ Exercise A.4 — Predict the Outcome
+### Exercise A.4 — Predict the Outcome
 
 For each ruleset below, predict what happens. Do not test yet — reason it out on paper first. Be specific about *why*.
 
@@ -253,7 +253,7 @@ The missing rule is: `ACCEPT all ctstate ESTABLISHED,RELATED` — this allows re
 
 ## A.5 — Matching Rules to Security Requirements
 
-### ✏️ Exercise A.5
+### Exercise A.5
 
 Write a plain-English firewall rule that satisfies each requirement below. You do not need to write exact command syntax yet — describe the rule in terms of protocol, port, source, destination, and action.
 
@@ -309,7 +309,7 @@ sudo a2ensite default-ssl
 sudo service apache2 restart
 ```
 
-> Apache ships with a self-signed certificate under `/etc/ssl/certs/ssl-cert-snakeoil.pem`. Browsers will show a security warning for self-signed certs — this is expected in a lab environment. Use `curl -k` (insecure mode) or `nmap` to verify port 443 without worrying about certificate validation.
+> Apache ships with a self-signed certificate under `/etc/ssl/certs/ssl-cert-snakeoil.pem`. Browsers will show a security warning for self-signed certs. Since this is a lab environment just for testing, we will use `curl -k` (insecure mode) or `nmap` to verify port 443 without worrying about certificate validation.
 
 Check that Apache and OpenSSH are running:
 ```bash
@@ -317,20 +317,21 @@ sudo service apache2 status
 sudo service ssh status
 ```
 
-Run `ip a show` on each VM and fill in this reference table **now**. Every placeholder in this lab (`<Ubuntu_IP>`, `<Kali_IP>`, `<Kali_Subnet>`) maps to one of these values. Your addresses will differ from any examples shown.
-
+Record the Ubuntu VM's IP address:
 ```bash
 ip a show
 ```
 
-| Variable | How to derive it | Your value |
-|---|---|---|
-| `<Ubuntu_IP>` | `inet` address on Ubuntu's main interface | |
-| `<Kali_IP>` | `inet` address on Kali's main interface | |
-| `<Kali_Subnet>` | First three octets of `<Kali_IP>` + `.0/24` — e.g. if Kali is `10.10.5.47`, the subnet is `10.10.5.0/24` | |
-| `<Ubuntu_IPv6>` | `inet6` address on Ubuntu's main interface (starts with `fe80::`) | |
+> Note the `inet` address — it will look like `10.61.x.x`. You will use this throughout the lab.
 
 ### On the Kali VM:
+
+Record the Kali VM's IP address:
+```bash
+ip a show
+```
+
+> Note the `inet` address — it will look like `10.61.x.x`. You will use this throughout the lab.
 
 Confirm you can reach the Ubuntu VM before any firewall changes:
 ```bash
@@ -440,8 +441,13 @@ sudo ufw allow 443/tcp
 2. Test from Kali: Can you still SSH in? (The answer depends on whether Kali is on that subnet — determine this first.)
 
 ```bash
-# On Ubuntu, remove the old open SSH rule and add the restricted one.
-# Use <Kali_Subnet> from the reference table you filled in during B.1:
+# On Kali, check your IP:
+ip a show
+```
+Use the first three octets of the Kali IP address to determine the subnet it is on. For example, if the Kali IP is `10.61.83.119`, it belongs to the `10.61.83.0/24` subnet. In this case, `10.61.83.0/24` is your Kali subnet, and you should allow SSH from that subnet while blocking it from everywhere else.
+
+```bash
+# On Ubuntu, remove the old open SSH rule and add the restricted one:
 sudo ufw delete allow 22/tcp
 sudo ufw allow from <Kali_Subnet> to any port 22
 ```
@@ -685,9 +691,10 @@ sudo iptables -A INPUT -p tcp --dport 80 -j ACCEPT
 sudo iptables -A INPUT -p tcp --dport 443 -j ACCEPT
 ```
 
-**Step 4**: Allow SSH from your management subnet only. Use `<Kali_Subnet>` from the reference table in B.1:
+**Step 4**: Allow SSH from the management subnet only. Use the same subnet you determined in Scenario 2 (the first three octets of your Kali IP address, followed by `.0/24`):
 ```bash
-sudo iptables -A INPUT -p tcp --dport 22 -s <Kali_Subnet> -j ACCEPT
+sudo iptables -A INPUT -p tcp --dport 22 -s <your_subnet>/24 -j ACCEPT
+# Example: sudo iptables -A INPUT -p tcp --dport 22 -s 10.61.83.0/24 -j ACCEPT
 ```
 
 **Step 5**: Allow loopback traffic:
