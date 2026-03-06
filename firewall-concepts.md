@@ -325,10 +325,10 @@ ip a show
 
 | Variable | How to derive it | Your value |
 |---|---|---|
-| `<Ubuntu_IP>` | `inet` address on Ubuntu's main interface | |
-| `<Kali_IP>` | `inet` address on Kali's main interface | |
+| `<Ubuntu_IP>` | `inet` address on Ubuntu's main interface — **record the IP only, not the `/prefix`** (e.g. `10.61.5.20`, not `10.61.5.20/24`) | |
+| `<Kali_IP>` | `inet` address on Kali's main interface — **record the IP only, not the `/prefix`** | |
 | `<Kali_Subnet>` | First three octets of `<Kali_IP>` + `.0/24` — e.g. if Kali is `10.10.5.47`, enter `10.10.5.0/24` | |
-| `<Ubuntu_IPv6>` | `inet6` address on Ubuntu's main interface (starts with `fe80::`) | |
+| `<Ubuntu_IPv6>` | `inet6` address on Ubuntu's main interface (starts with `fe80::`) — **record the IP only, not the `/prefix`** | |
 
 ### On the Kali VM:
 
