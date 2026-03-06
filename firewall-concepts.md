@@ -317,21 +317,20 @@ sudo service apache2 status
 sudo service ssh status
 ```
 
-Record the Ubuntu VM's IP address:
+Run `ip a show` on **each VM** and fill in this reference table **now**. Every placeholder in this lab (`<Ubuntu_IP>`, `<Kali_IP>`, `<Kali_Subnet>`, `<Ubuntu_IPv6>`) maps to one of these values. Your addresses will differ from any examples shown.
+
 ```bash
 ip a show
 ```
 
-> Note the `inet` address — it will look like `10.61.x.x`. You will use this throughout the lab.
+| Variable | How to derive it | Your value |
+|---|---|---|
+| `<Ubuntu_IP>` | `inet` address on Ubuntu's main interface | |
+| `<Kali_IP>` | `inet` address on Kali's main interface | |
+| `<Kali_Subnet>` | First three octets of `<Kali_IP>` + `.0/24` — e.g. if Kali is `10.10.5.47`, enter `10.10.5.0/24` | |
+| `<Ubuntu_IPv6>` | `inet6` address on Ubuntu's main interface (starts with `fe80::`) | |
 
 ### On the Kali VM:
-
-Record the Kali VM's IP address:
-```bash
-ip a show
-```
-
-> Note the `inet` address — it will look like `10.61.x.x`. You will use this throughout the lab.
 
 Confirm you can reach the Ubuntu VM before any firewall changes:
 ```bash
@@ -435,16 +434,10 @@ sudo ufw allow 443/tcp
 
 ### Scenario 2: Restricting SSH to a Subnet
 
-**Requirement**: Your security team decides that SSH should only be accessible from the management network `10.61.83.0/24`. Direct SSH from any other IP address must be blocked.
+**Requirement**: Your security team decides that SSH should only be accessible from the management network (your `<Kali_Subnet>`). Direct SSH from any other IP address must be blocked.
 
 1. Modify your SSH rule to restrict it to the subnet.
-2. Test from Kali: Can you still SSH in? (The answer depends on whether Kali is on that subnet — determine this first.)
-
-```bash
-# On Kali, check your IP:
-ip a show
-```
-Use the first three octets of the Kali IP address to determine the subnet it is on. For example, if the Kali IP is `10.61.83.119`, it belongs to the `10.61.83.0/24` subnet. In this case, `10.61.83.0/24` is your Kali subnet, and you should allow SSH from that subnet while blocking it from everywhere else.
+2. Test from Kali: Can you still SSH in? (Use `<Kali_Subnet>` from the reference table in B.1.)
 
 ```bash
 # On Ubuntu, remove the old open SSH rule and add the restricted one:
@@ -691,10 +684,9 @@ sudo iptables -A INPUT -p tcp --dport 80 -j ACCEPT
 sudo iptables -A INPUT -p tcp --dport 443 -j ACCEPT
 ```
 
-**Step 4**: Allow SSH from the management subnet only. Use the same subnet you determined in Scenario 2 (the first three octets of your Kali IP address, followed by `.0/24`):
+**Step 4**: Allow SSH from your management subnet only. Use `<Kali_Subnet>` from the reference table in B.1:
 ```bash
-sudo iptables -A INPUT -p tcp --dport 22 -s <your_subnet>/24 -j ACCEPT
-# Example: sudo iptables -A INPUT -p tcp --dport 22 -s 10.61.83.0/24 -j ACCEPT
+sudo iptables -A INPUT -p tcp --dport 22 -s <Kali_Subnet> -j ACCEPT
 ```
 
 **Step 5**: Allow loopback traffic:
@@ -849,19 +841,12 @@ Most administrators configure iptables thoroughly and completely forget about ip
 
 You have carefully locked down your IPv4 firewall. Verify it from Kali:
 ```bash
-nmap <Ubuntu_IPv4_IP>
+nmap <Ubuntu_IP>
 ```
 
-Now, find the Ubuntu VM's **IPv6 address**:
+Now use `<Ubuntu_IPv6>` from the reference table in B.1. From Kali, scan the IPv6 address (note: you may need to append `%eth0` to link-local addresses):
 ```bash
-# On Ubuntu:
-ip a show
-# Look for the "inet6" line — it starts with fe80::
-```
-
-From Kali, scan the IPv6 address (note: you may need to append the interface name on link-local addresses):
-```bash
-nmap -6 <Ubuntu_IPv6_address>
+nmap -6 <Ubuntu_IPv6>
 ```
 
 > **What did you find?** Document which ports are open on the IPv6 interface and why this is surprising given your iptables configuration.
@@ -1149,7 +1134,9 @@ sudo iptables -P FORWARD ACCEPT
 
 # Reset IPv6
 sudo ip6tables -F INPUT
+sudo ip6tables -F FORWARD
 sudo ip6tables -P INPUT ACCEPT
+sudo ip6tables -P FORWARD ACCEPT
 
 # Disable UFW if it was left enabled
 sudo ufw disable
