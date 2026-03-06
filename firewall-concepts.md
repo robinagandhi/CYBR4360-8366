@@ -162,7 +162,7 @@ Answer these questions before moving on:
 
 ## A.4 — Rule Ordering Puzzles
 
-Firewall Rules are evaluated **top to bottom**. The **first matching rule wins** — remaining rules are not evaluated. This is one of the most common sources of firewall bugs. Finally,the default policy is evaluated only if no rules match. The default policy is not a catch-all that applies to every packet — **it only applies to packets that fail to match any rule.** In the puzzles below the default policy is shown at the top of the chain for clarity, but remember that it is only evaluated if no rules match.
+Firewall Rules are evaluated **top to bottom**. The **first matching rule wins** — remaining rules are not evaluated. This is one of the most common sources of firewall bugs. Finally, the default policy is evaluated only if no rules match. The default policy is not a catch-all that applies to every packet — **it only applies to packets that fail to match any rule.** In the puzzles below the default policy is shown at the top of the chain for clarity, but remember that it is only evaluated if no rules match.
 
 ### ✏️ Exercise A.4 — Predict the Outcome
 
@@ -297,13 +297,19 @@ UFW is a command-line frontend for `iptables` that trades raw power for clarity.
 
 Perform a clean install of Apache and OpenSSH and start these services:
 ```bash
-sudo apt-get purge openssh-server
-sudo apt-get purge openssh-client
-sudo apt-get purge apache2
-sudo apt-get install openssh-server -y
-sudo apt-get install apache2 -y
-sudo service apache2 start 
+sudo apt-get purge openssh-server openssh-client apache2 -y
+sudo apt-get install openssh-server apache2 -y
+sudo service apache2 start
 ```
+
+Enable HTTPS on Apache using the built-in self-signed certificate:
+```bash
+sudo a2enmod ssl
+sudo a2ensite default-ssl
+sudo service apache2 restart
+```
+
+> Apache ships with a self-signed certificate under `/etc/ssl/certs/ssl-cert-snakeoil.pem`. Browsers will show a security warning for self-signed certs — this is expected in a lab environment. Use `curl -k` (insecure mode) or `nmap` to verify port 443 without worrying about certificate validation.
 
 Check that Apache and OpenSSH are running:
 ```bash
@@ -311,21 +317,20 @@ sudo service apache2 status
 sudo service ssh status
 ```
 
-Record the Ubuntu VM's IP address:
+Run `ip a show` on each VM and fill in this reference table **now**. Every placeholder in this lab (`<Ubuntu_IP>`, `<Kali_IP>`, `<Kali_Subnet>`) maps to one of these values. Your addresses will differ from any examples shown.
+
 ```bash
 ip a show
 ```
 
-> Note the `inet` address — it will look like `10.61.x.x`. You will use this throughout the lab.
+| Variable | How to derive it | Your value |
+|---|---|---|
+| `<Ubuntu_IP>` | `inet` address on Ubuntu's main interface | |
+| `<Kali_IP>` | `inet` address on Kali's main interface | |
+| `<Kali_Subnet>` | First three octets of `<Kali_IP>` + `.0/24` — e.g. if Kali is `10.10.5.47`, the subnet is `10.10.5.0/24` | |
+| `<Ubuntu_IPv6>` | `inet6` address on Ubuntu's main interface (starts with `fe80::`) | |
 
 ### On the Kali VM:
-
-Record the Kali VM's IP address:
-```bash
-ip a show
-```
-
-> Note the `inet` address — it will look like `10.61.x.x`. You will use this throughout the lab.
 
 Confirm you can reach the Ubuntu VM before any firewall changes:
 ```bash
@@ -333,7 +338,7 @@ ping -c 3 <Ubuntu_IP>
 nmap <Ubuntu_IP>
 ```
 
-Record which ports are currently open. You should see at least port **22 (SSH)** and port **80 (HTTP)** open.
+Record which ports are currently open. You should see at least port **22 (SSH)**, port **80 (HTTP)**, and port **443 (HTTPS)** open.
 
 > **Checkpoint question**: Why are these ports open even before you configure anything? What default policy is in effect?
 
@@ -396,16 +401,11 @@ Here is how we can enable HTTP access on port 80:
 sudo ufw allow 80/tcp
 ```
 
-**Verify from Kali:**
-```bash
-nmap <Ubuntu_IP>
-curl http://<Ubuntu_IP>
-```
+Now write and apply the other two rules needed for SSH and HTTPS access before enabling UFW. Remember to specify the protocol!
 
-Now write and apply the other two rules needed for SSH and HTTPS access. Remember to specify the protocol!
+> ⚠️ Add **all** your rules before running `ufw enable`. Enabling UFW enforces the default deny policy immediately — if you have not added an SSH rule yet, you will be locked out.
 
-Then enable UFW:
-
+Once all three rules are in place, enable UFW:
 ```bash
 sudo ufw enable
 ```
@@ -414,9 +414,10 @@ sudo ufw enable
 ```bash
 nmap <Ubuntu_IP>
 curl http://<Ubuntu_IP>
+curl -k https://<Ubuntu_IP>
 ```
 
-> Expected result: Ports 22, 80, and 443 should appear open. The Apache default page should load.
+> Expected result: Ports 22, 80, and 443 should appear open. Both curl commands should return the Apache default page HTML. The `-k` flag skips certificate validation for the self-signed cert.
 
 <details>
 <summary>▶ Hint (try without looking first)</summary>
@@ -439,13 +440,8 @@ sudo ufw allow 443/tcp
 2. Test from Kali: Can you still SSH in? (The answer depends on whether Kali is on that subnet — determine this first.)
 
 ```bash
-# On Kali, check your IP:
-ip a show
-```
-Use the first three octets of the Kali IP address to determine the subnet it is on. For example, if the Kali IP is `10.61.83.119`, it belongs to the `10.61.83.0/24` subnet. In this case, `10.61.83.0/24` is your Kali subnet, and you should allow SSH from that subnet while blocking it from everywhere else.
-
-```bash
-# On Ubuntu, remove the old open SSH rule and add the restricted one:
+# On Ubuntu, remove the old open SSH rule and add the restricted one.
+# Use <Kali_Subnet> from the reference table you filled in during B.1:
 sudo ufw delete allow 22/tcp
 sudo ufw allow from <Kali_Subnet> to any port 22
 ```
@@ -689,9 +685,9 @@ sudo iptables -A INPUT -p tcp --dport 80 -j ACCEPT
 sudo iptables -A INPUT -p tcp --dport 443 -j ACCEPT
 ```
 
-**Step 4**: Allow SSH from the management subnet only:
+**Step 4**: Allow SSH from your management subnet only. Use `<Kali_Subnet>` from the reference table in B.1:
 ```bash
-sudo iptables -A INPUT -p tcp --dport 22 -s 192.168.56.0/24 -j ACCEPT
+sudo iptables -A INPUT -p tcp --dport 22 -s <Kali_Subnet> -j ACCEPT
 ```
 
 **Step 5**: Allow loopback traffic:
@@ -822,7 +818,7 @@ sudo iptables -A INPUT -m conntrack --ctstate ESTABLISHED,RELATED -j ACCEPT  # R
 |---|---|---|
 | **Rule A** | Port 80 (HTTP) is allowed on **UDP**, but HTTP runs on **TCP**. UDP/80 is not a real service. | Web traffic on port 80 is blocked. Apache is unreachable. The admin tests with a ping (ICMP) and thinks the server is up, but browsers time out. |
 | **Rule B** | A blanket `ACCEPT all` rule appears in the middle of the chain before the loopback, ICMP, and ESTABLISHED/RELATED rules. Everything after it is dead code, and all traffic is accepted — including traffic that should be blocked. | The firewall is essentially disabled from Rule B onward. Any port is accessible. |
-| **Rule C** | The `ESTABLISHED,RELATED` rule appears **after** the blanket ACCEPT in Rule B, making it redundant. More importantly, if Rule B were removed, this rule at the *bottom* of the chain after DROP policy is still evaluated, but only after all more-specific rules fail — which is actually fine for ESTABLISHED. However, combined with Rule B, the ordering demonstrates that the admin did not plan the ruleset. If Rule B is fixed, this rule's position is acceptable but non-optimal. | Subtle: without Rule B, outbound-initiated responses would fail if `ESTABLISHED,RELATED` were not present. The real danger is that Rule B masks this issue entirely during testing. |
+| **Rule C** | The `ESTABLISHED,RELATED` rule is placed **after** the blanket ACCEPT in Rule B. Because Rule B matches every packet and terminates rule evaluation, Rule C is dead code — never reached. If Rule B were corrected or removed, Rule C at the bottom of the chain would also be problematic: return traffic for connections initiated by the server would not match ports 22, 80, or 443 (those are destination-port rules for incoming connections), so `apt-get update` and similar server-initiated traffic would fail silently. The `ESTABLISHED,RELATED` rule must appear *before* the default DROP policy and *after* specific ACCEPT rules, not buried below a blanket ACCEPT. | Two compounding symptoms: (1) Rule B masks the problem entirely during testing — everything works because all traffic is accepted. (2) If Rule B is fixed without correcting Rule C's position, outbound-initiated responses break and `apt-get update` hangs with no useful error. |
 
 </details>
 
@@ -840,7 +836,7 @@ sudo iptables -A INPUT -m conntrack --ctstate ESTABLISHED,RELATED -j ACCEPT  # R
 
 So far all your firewall rules have been applied using `iptables`, which only controls **IPv4** traffic. Linux has a completely separate tool — `ip6tables` — for **IPv6**.
 
-Most administrators configure iptables thoroughly and completely forget about ip6tables. However, IPv6 is enabled by default on modern Linux distributions. This means that if you only configure iptables, your server may be wide open to IPv6 traffic — a huge blind spot. UFW does have some IPv6 support, but it is inconsistent. 
+Most administrators configure iptables thoroughly and completely forget about ip6tables. However, IPv6 is enabled by default on modern Linux distributions. This means that if you only configure iptables, your server may be wide open to IPv6 traffic — a huge blind spot. UFW does support IPv6 when `IPV6=yes` is set in `/etc/default/ufw`, but in this section we are working with raw iptables directly, which requires a separate `ip6tables` ruleset.
 
 ### The Challenge
 
@@ -935,6 +931,9 @@ sudo ufw allow 22/tcp
 The safest pattern when changing firewall rules on a live server:
 
 ```bash
+# Install the at scheduler if not already present:
+sudo apt-get install at -y
+
 # Schedule a safety restore in 5 minutes BEFORE making changes
 echo "sudo iptables -P INPUT ACCEPT && sudo iptables -F INPUT" | at now + 5 minutes
 
@@ -977,12 +976,15 @@ sudo iptables -P OUTPUT DROP
 sudo iptables -A OUTPUT -p udp --dport 53 -j ACCEPT
 sudo iptables -A OUTPUT -p tcp --dport 53 -j ACCEPT
 
-# Allow HTTP/HTTPS (for apt-get update)
+# Allow HTTP/HTTPS (for apt-get update and outbound web traffic)
 sudo iptables -A OUTPUT -p tcp --dport 80 -j ACCEPT
 sudo iptables -A OUTPUT -p tcp --dport 443 -j ACCEPT
 
 # Allow NTP (time synchronization)
 sudo iptables -A OUTPUT -p udp --dport 123 -j ACCEPT
+
+# Allow ICMP outbound (ping and network diagnostics)
+sudo iptables -A OUTPUT -p icmp -j ACCEPT
 
 # Allow established connections (responses to incoming connections)
 sudo iptables -A OUTPUT -m conntrack --ctstate ESTABLISHED,RELATED -j ACCEPT
@@ -994,7 +996,7 @@ sudo iptables -A OUTPUT -o lo -j ACCEPT
 Test that normal operations still work:
 ```bash
 sudo apt-get update
-ping 8.8.8.8
+ping -c 3 8.8.8.8
 curl https://example.com
 ```
 
