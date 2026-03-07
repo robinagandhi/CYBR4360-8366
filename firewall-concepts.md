@@ -359,8 +359,22 @@ Check UFW's current status:
 sudo ufw status verbose
 ```
 
-You should see `Status: inactive`. UFW is installed but not yet enforcing anything. View its default policy settings. Before enabling UFW, understand what the current default policies mean:
-- `default: deny (incoming)`, if you **enable** with this setting, all incoming connections are blocked immediately until you add allow rules. This is the whitelisting (fail safe defaults) philosophy.
+You should see `Status: inactive`. UFW is installed but not yet enforcing anything. View its default policy settings. 
+
+```bash
+cat /etc/default/ufw
+```
+Look for these lines:
+
+```bash
+DEFAULT_INPUT_POLICY="DROP"
+DEFAULT_OUTPUT_POLICY="ACCEPT"
+DEFAULT_FORWARD_POLICY="DROP"
+```
+
+That file holds the configured defaults regardless of whether UFW is active. 
+Before enabling UFW, understand what the current default policies mean:
+- `DEFAULT_INPUT_POLICY="DROP"`, if you **enable** with this setting, all incoming connections are blocked immediately until you add allow rules. This is the whitelisting (fail safe defaults) philosophy.
 
 > **Critical Warning**: Enabling UFW with default deny **before** adding a rule will terminate your session and lock you out remotely. Always add your allow rule first. This is deliberate lesson material, you will experience what lockout looks like in Part D.
 
@@ -376,7 +390,7 @@ sudo ufw default allow outgoing
 
 This establishes the **whitelist** stance: block all incoming by default, allow all outgoing by default.
 
-> **Discussion**: Why is `allow outgoing` the typical default even for hardened servers? What risks does it introduce?
+> **Reflection**: Why is `allow outgoing` the typical default? What risks does it introduce?
 
 ---
 
@@ -451,7 +465,7 @@ sudo ufw status numbered
 ssh -l <username> <Ubuntu_IP>
 ```
 
-> **Discussion**: What is the trade-off between restricting SSH to a subnet versus leaving it open? What other control could you layer on top of SSH to improve security even if port 22 is accessible?
+> **Reflection**: What is the trade-off between restricting SSH to a subnet versus leaving it open? What other control could you layer on top of SSH to improve security even if port 22 is accessible?
 
 ---
 
@@ -475,7 +489,7 @@ Verify from Kali:
 ping -c 3 <Ubuntu_IP>
 ```
 
-> **Discussion**: Is enabling ICMP a security risk? What information does a ping response reveal to an attacker? Look up "ICMP tunneling", how can ICMP be abused?
+> **Reflection**: Is enabling ICMP a security risk? What information does a ping response reveal to an attacker? Look up "ICMP tunneling", how can ICMP be abused?
 
 ---
 
@@ -520,7 +534,7 @@ sudo ufw logging medium
 
 From the Kali VM, run a port scan to generate denied connection events:
 ```bash
-nmap -p 1-1000 <Ubuntu_IP>
+nmap -p 1-500 <Ubuntu_IP>
 ```
 
 Back on Ubuntu, check the firewall log:
@@ -532,6 +546,8 @@ sudo tail -f /var/log/ufw.log
 > - What prefix appears on blocked packets in the log?
 > - Can you see Kali's IP address in the log entries?
 > - What information does each log line contain? (Look for `SRC=`, `DST=`, `DPT=`)
+
+Hit `crtl+c` to exit the log file. 
 
 ---
 
@@ -614,7 +630,7 @@ iptables  <operation>  <chain>  <match criteria>  <target>
 |---|---|---|
 | `operation` | What to do with the rule | `-A` append, `-I` insert at position, `-D` delete, `-F` flush all, `-P` set default policy |
 | `chain` | Which chain to modify | `INPUT`, `OUTPUT`, `FORWARD` |
-| `match criteria` | Conditions to match a packet | `-p tcp`, `--dport 80`, `-s 192.168.1.0/24`, `-i eth0`, `-m conntrack --ctstate` |
+| `match criteria` | Conditions to match a packet | `-p tcp`, `--dport 80`, `-s 10.61.83.0/24`, `-i eth0`, `-m conntrack --ctstate` |
 | `target` | What to do with matching packets | `-j ACCEPT`, `-j DROP`, `-j REJECT`, `-j LOG` |
 
 ### Exercise C.2 — Command Parsing
@@ -811,7 +827,7 @@ sudo iptables -A INPUT -m conntrack --ctstate ESTABLISHED,RELATED -j ACCEPT  # R
 |---|---|---|
 | **Rule A** | Port 80 (HTTP) is allowed on **UDP**, but HTTP runs on **TCP**. UDP/80 is not a real service. | Web traffic on port 80 is blocked. Apache is unreachable. The admin tests with a ping (ICMP) and thinks the server is up, but browsers time out. |
 | **Rule B** | A blanket `ACCEPT all` rule appears in the middle of the chain before the loopback, ICMP, and ESTABLISHED/RELATED rules. Everything after it is dead code, and all traffic is accepted — including traffic that should be blocked. | The firewall is essentially disabled from Rule B onward. Any port is accessible. |
-| **Rule C** | The `ESTABLISHED,RELATED` rule is placed **after** the blanket ACCEPT in Rule B. Because Rule B matches every packet and terminates rule evaluation, Rule C is dead code — never reached. If Rule B were corrected or removed, Rule C at the bottom of the chain would also be problematic: return traffic for connections initiated by the server would not match ports 22, 80, or 443 (those are destination-port rules for incoming connections), so `apt-get update` and similar server-initiated traffic would fail silently. The `ESTABLISHED,RELATED` rule must appear *before* the default DROP policy and *after* specific ACCEPT rules, not buried below a blanket ACCEPT. | Two compounding symptoms: (1) Rule B masks the problem entirely during testing — everything works because all traffic is accepted. (2) If Rule B is fixed without correcting Rule C's position, outbound-initiated responses break and `apt-get update` hangs with no useful error. |
+| **Rule C** | The `ESTABLISHED,RELATED` rule is placed **after** the blanket ACCEPT in Rule B. Because Rule B matches every packet and terminates rule evaluation, Rule C is dead code that is never reached. Also, place ESTABLISHED/RELATED rules at the top of the chain to handle most established, related traffic efficiently without going through all the specific accept rules. 
 
 </details>
 
@@ -838,7 +854,7 @@ You have carefully locked down your IPv4 firewall. Verify it from Kali:
 nmap <Ubuntu_IP>
 ```
 
-Now use `<Ubuntu_IPv6>` from the reference table in B.1. From Kali, scan the IPv6 address (note: you may need to append `%eth0` to link-local addresses):
+Now use `<Ubuntu_IPv6>` from the reference table in B.1. From Kali, scan the IPv6 address:
 ```bash
 nmap -6 <Ubuntu_IPv6>
 ```
@@ -867,7 +883,7 @@ sudo ip6tables -A INPUT -m conntrack --ctstate ESTABLISHED,RELATED -j ACCEPT
 
 Verify from Kali with another IPv6 nmap scan.
 
-> **Discussion**: In a production environment, what tooling or process would ensure that IPv4 and IPv6 firewall rules are kept in sync? Research `nftables`, how does it unify both in a single ruleset?
+> **Reflection**: In a production environment, what tooling or process would ensure that IPv4 and IPv6 firewall rules are kept in sync? Research `nftables`, how does it unify both in a single ruleset?
 
 ---
 
@@ -909,7 +925,6 @@ sudo ufw allow 22/tcp
 **If this were a cloud server (no console access)**:
 - AWS: Use EC2 Instance Connect or Systems Manager Session Manager
 - Azure: Use Serial Console or Run Command
-- DigitalOcean: Use the Recovery Console
 - Worst case: snapshot the disk and mount it to a rescue instance to edit firewall rules
 
 ### Prevention
@@ -1014,9 +1029,6 @@ sudo iptables -F INPUT
 # Drop all Telnet
 sudo iptables -A INPUT -p tcp --dport 23 -j DROP
 
-# ESTABLISHED/RELATED (return traffic)
-sudo iptables -A INPUT -m conntrack --ctstate ESTABLISHED,RELATED -j ACCEPT
-
 # Default policy — this is the last resort
 sudo iptables -P INPUT DROP
 
@@ -1032,6 +1044,9 @@ sudo iptables -A INPUT -p tcp --dport 22 -s 192.168.56.0/24 -j ACCEPT
 # Allow HTTP
 sudo iptables -A INPUT -p tcp --dport 80 -j ACCEPT
 
+# ESTABLISHED/RELATED (return traffic)
+sudo iptables -A INPUT -m conntrack --ctstate ESTABLISHED,RELATED -j ACCEPT
+
 # Allow loopback
 sudo iptables -A INPUT -i lo -j ACCEPT
 
@@ -1039,14 +1054,14 @@ sudo iptables -A INPUT -i lo -j ACCEPT
 sudo iptables -A INPUT -p icmp --icmp-type echo-request -j ACCEPT
 ```
 
-**Identify every problem in this script**, describe what symptom each causes, and write the corrected script.
+**Identify problems in this script**, describe what symptom each causes, and write the corrected script.
 
 <details>
 <summary>▶ Reveal Answers</summary>
 
 **Problem 1**: The Telnet DROP rule (line 8) appears before the Telnet LOG rule (line 18). Since DROP is a terminating target, the LOG rule is never reached. Telnet packets are dropped but never logged. LOG must come before DROP.
 
-**Problem 2**: The `ESTABLISHED,RELATED` rule appears before most ACCEPT rules. While not functionally catastrophic (it still allows return traffic correctly), convention and clarity dictate placing it near the end of specific rules, just before the default policy handles anything unmatched.
+**Problem 2**: The `ESTABLISHED,RELATED` rule appears after most ACCEPT rules. While not functionally catastrophic (it still allows return traffic correctly), placing it at the start of specific accept rules, avoids traversing a long rule list for large bulk downloads.
 
 **Problem 3**: `-P INPUT DROP` sets the default policy. Policies are set independently of rules and take effect regardless of where this line appears in the script. However, placing it after `-F INPUT` (flush) and before adding rules means that during the brief window while rules are being added, the INPUT chain has DROP policy with no rules, any connection made during this moment (including your SSH session) will be dropped. The correct approach is to set the policy **after** all rules are added, or use `iptables-restore` to apply the entire ruleset atomically.
 
@@ -1055,15 +1070,15 @@ sudo iptables -A INPUT -p icmp --icmp-type echo-request -j ACCEPT
 #!/bin/bash
 sudo iptables -F INPUT
 
-# Specific services first
+# Return traffic for outbound-initiated connections first
+sudo iptables -A INPUT -m conntrack --ctstate ESTABLISHED,RELATED -j ACCEPT
+
+# Next, specific services 
 sudo iptables -A INPUT -p tcp --dport 80 -j ACCEPT
 sudo iptables -A INPUT -p tcp --dport 443 -j ACCEPT
 sudo iptables -A INPUT -p tcp --dport 22 -s 192.168.56.0/24 -j ACCEPT
 sudo iptables -A INPUT -i lo -j ACCEPT
 sudo iptables -A INPUT -p icmp --icmp-type echo-request -j ACCEPT
-
-# Return traffic for outbound-initiated connections
-sudo iptables -A INPUT -m conntrack --ctstate ESTABLISHED,RELATED -j ACCEPT
 
 # Log Telnet BEFORE dropping it (order matters — LOG is non-terminating)
 sudo iptables -A INPUT -p tcp --dport 23 -j LOG --log-prefix "TELNET: "
@@ -1081,12 +1096,13 @@ sudo iptables -P INPUT DROP
 
 By default, iptables rules are stored only in memory. They are lost on reboot.
 
+Here are a few options. You don't need to try these commands, they are for information only. 
+
 ### Option A: iptables-persistent (Debian/Ubuntu)
 
 ```bash
 sudo apt-get install iptables-persistent -y
-# Save current rules:
-sudo netfilter-persistent save
+# You will get prompts to save your rules.
 # Rules are saved to:
 #   /etc/iptables/rules.v4
 #   /etc/iptables/rules.v6
@@ -1106,8 +1122,6 @@ sudo iptables-restore < /etc/iptables/rules.v4
 ### Option C: UFW (handles persistence automatically)
 
 UFW rules persist across reboots by default when UFW is enabled. No extra steps required.
-
----
 
 ---
 
