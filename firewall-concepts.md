@@ -216,12 +216,12 @@ num  target  prot  source    destination   extra
 ```
 Chain INPUT (policy DROP)
 num  target  prot  source    destination   extra
-1    ACCEPT  tcp   anywhere  anywhere      dport 80
-2    ACCEPT  tcp   anywhere  anywhere      dport 443
-3    ACCEPT  tcp   anywhere  anywhere      dport 22
-4    ACCEPT  all   loopback  anywhere
-5    ACCEPT  icmp  anywhere  anywhere      icmptype echo-request
-6    ACCEPT  all   anywhere  anywhere      ctstate ESTABLISHED,RELATED
+1    ACCEPT  all   anywhere  anywhere      ctstate ESTABLISHED,RELATED
+2    ACCEPT  tcp   anywhere  anywhere      dport 80
+3    ACCEPT  tcp   anywhere  anywhere      dport 443
+4    ACCEPT  tcp   anywhere  anywhere      dport 22
+5    ACCEPT  all   loopback  anywhere
+6    ACCEPT  icmp  anywhere  anywhere      icmptype echo-request    
 ```
 
 - Is this ruleset functional? What does it allow and block?
@@ -240,11 +240,11 @@ num  target  prot  source    destination   extra
 The missing rule is: `ACCEPT all ctstate ESTABLISHED,RELATED`, this allows return traffic for connections your machine initiated.
 
 **Puzzle 4:** This ruleset is functional and well-structured. It allows:
+- Return traffic for outbound connections
 - Web traffic (80, 443)
 - SSH (22)
 - Loopback (local inter-process communication)
 - ICMP echo (ping)
-- Return traffic for outbound connections
 - The only concern: SSH is open from *any* source. A production server should restrict port 22 to a specific management subnet. Also, IPv6 is not addressed at all!
 
 </details>
