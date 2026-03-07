@@ -359,14 +359,8 @@ Check UFW's current status:
 sudo ufw status verbose
 ```
 
-You should see `Status: inactive`. UFW is installed but not yet enforcing anything. View its default policy settings:
-
-```bash
-sudo ufw show raw
-```
-
-Before enabling UFW, understand what the current default policies mean:
-- `default: deny (incoming)`, if you **enable** with this setting, all incoming connections are blocked immediately until you add allow rules. This is the whitelisting philosophy.
+You should see `Status: inactive`. UFW is installed but not yet enforcing anything. View its default policy settings. Before enabling UFW, understand what the current default policies mean:
+- `default: deny (incoming)`, if you **enable** with this setting, all incoming connections are blocked immediately until you add allow rules. This is the whitelisting (fail safe defaults) philosophy.
 
 > **Critical Warning**: Enabling UFW with default deny **before** adding a rule will terminate your session and lock you out remotely. Always add your allow rule first. This is deliberate lesson material, you will experience what lockout looks like in Part D.
 
