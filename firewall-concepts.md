@@ -741,18 +741,18 @@ Before looking at the answer, explain in writing why `apt-get update` fails give
 The fix is to allow packets that belong to *already established* connections, connections that *your machine initiated*:
 
 ```bash
-sudo iptables -A INPUT -m conntrack --ctstate ESTABLISHED,RELATED -j ACCEPT
+sudo iptables -I INPUT 1 -m conntrack --ctstate ESTABLISHED,RELATED -j ACCEPT
 ```
 
 The `conntrack` module tracks connection state. A packet with state `ESTABLISHED` belongs to a connection already in progress. `RELATED` covers auxiliary connections opened as part of an established session (e.g., FTP data channels).
 
-**Position matters**: This rule should typically come *after* specific rules but *before* the default policy. Where it sits in your current chain is fine, but adding it at the very top would make it slightly more efficient, it matches the majority of ongoing traffic.
+**Position matters**: Placing it at position 1 ensures return traffic is accepted immediately, before other filtering rules are evaluated. That is the typical and recommended placement. 
 
 </details>
 
 Add the rule and verify `apt-get update` succeeds:
 ```bash
-sudo iptables -A INPUT -m conntrack --ctstate ESTABLISHED,RELATED -j ACCEPT
+sudo iptables -I INPUT 1 -m conntrack --ctstate ESTABLISHED,RELATED -j ACCEPT
 sudo apt-get update
 ```
 
@@ -781,21 +781,9 @@ sudo dmesg | grep -i "TELNET_ATTEMPT"
 
 Each log entry contains: source IP (`SRC=`), destination IP (`DST=`), protocol (`PROTO=`), source port (`SPT=`), destination port (`DPT=`), and more.
 
-### Exercise C.5 — Log a Port Scan
-
-From Kali, run a quick port scan for first 100 ports:
-```bash
-nmap -p 1-100 <Ubuntu_IP>
-```
-
-On Ubuntu, examine the kernel log. For each entry you find:
-1. What was the source IP?
-2. What ports were being probed?
-3. What does the volume of log entries tell you about the rate of the scan?
-
 ---
 
-## C.6 — Broken Ruleset Debugging Challenge
+## C.5 — Broken Ruleset Debugging Challenge
 
 Below is a ruleset that a junior administrator wrote for a web server. It has **three distinct bugs**.
 
@@ -830,8 +818,6 @@ sudo iptables -A INPUT -m conntrack --ctstate ESTABLISHED,RELATED -j ACCEPT  # R
 | **Rule C** | The `ESTABLISHED,RELATED` rule is placed **after** the blanket ACCEPT in Rule B. Because Rule B matches every packet and terminates rule evaluation, Rule C is dead code that is never reached. Also, place ESTABLISHED/RELATED rules at the top of the chain to handle most established, related traffic efficiently without going through all the specific accept rules. 
 
 </details>
-
----
 
 ---
 
