@@ -235,7 +235,7 @@ num  target  prot  source    destination   extra
 **Puzzle 2:** Rule 1 matches *every* packet immediately. Rules 2 and 3 are dead code, never evaluated. All traffic is accepted. The entire ruleset is effectively useless with a blanket ACCEPT at position 1.
 
 **Puzzle 3:** Two things are broken:
-- `apt-get update` fails, the *response packets* from the Ubuntu mirror arrive as new connections on ephemeral ports, not port 80. Without an `ESTABLISHED,RELATED` rule, the response packets hit the DROP default policy on the INPUT chain.
+- `apt-get update` fails, the *response packets* from the Ubuntu mirror arrive as return traffic to the client's ephemeral port and are tracked as `ESTABLISHED`; without an INPUT rule allowing that state, they hit the DROP default policy on the INPUT chain.
 - ICMP is not permitted, pings fail.
 The missing rule is: `ACCEPT all ctstate ESTABLISHED,RELATED`, this allows return traffic for connections your machine initiated.
 
@@ -547,7 +547,7 @@ sudo tail -f /var/log/ufw.log
 > - Can you see Kali's IP address in the log entries?
 > - What information does each log line contain? (Look for `SRC=`, `DST=`, `DPT=`)
 
-Hit `crtl+c` to exit the log file. 
+Hit `ctrl+c` to exit the log file. 
 
 ---
 
@@ -736,7 +736,7 @@ Before looking at the answer, explain in writing why `apt-get update` fails give
 <details>
 <summary>▶ Explanation</summary>
 
-`apt-get update` causes Ubuntu to send outbound HTTP/DNS requests to package repositories. Those requests leave fine (the OUTPUT chain has no restrictions). However, the **response packets** coming back from the repository servers arrive as *new connections from external sources*, and the INPUT chain has no rule allowing them. They hit the DROP default policy.
+`apt-get update` causes Ubuntu to send outbound HTTP/DNS requests to package repositories. Those requests leave fine (the OUTPUT chain has no restrictions). However, the **response packets** coming back from the repository servers are return packets to the client's ephemeral port and are tracked as `ESTABLISHED`; without an INPUT rule allowing that state, they hit the DROP default policy on the INPUT chain.
 
 The fix is to allow packets that belong to *already established* connections, connections that *your machine initiated*:
 
@@ -1047,7 +1047,7 @@ sudo iptables -A INPUT -p icmp --icmp-type echo-request -j ACCEPT
 
 **Problem 1**: The Telnet DROP rule (line 8) appears before the Telnet LOG rule (line 18). Since DROP is a terminating target, the LOG rule is never reached. Telnet packets are dropped but never logged. LOG must come before DROP.
 
-**Problem 2**: The `ESTABLISHED,RELATED` rule appears after most ACCEPT rules. While not functionally catastrophic (it still allows return traffic correctly), placing it at the start of specific accept rules, avoids traversing a long rule list for large bulk downloads.
+**Problem 2**: The `ESTABLISHED,RELATED` rule appears after most ACCEPT rules. This is usually still functionally correct, but placing it near the top is preferred for efficiency and readability because return traffic is matched early.
 
 **Problem 3**: `-P INPUT DROP` sets the default policy. Policies are set independently of rules and take effect regardless of where this line appears in the script. However, placing it after `-F INPUT` (flush) and before adding rules means that during the brief window while rules are being added, the INPUT chain has DROP policy with no rules, any connection made during this moment (including your SSH session) will be dropped. The correct approach is to set the policy **after** all rules are added, or use `iptables-restore` to apply the entire ruleset atomically.
 
