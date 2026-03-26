@@ -469,31 +469,7 @@ ssh -l <username> <Ubuntu_IP>
 
 ---
 
-### Scenario 3: Adding ICMP and Loopback
-
-**Requirement**: Allow ICMP echo requests (ping) so that network monitoring tools can verify reachability. Also ensure local processes can communicate with each other on the loopback interface.
-
-Try to ping the Ubuntu VM from Kali before adding any rule:
-```bash
-ping -c 3 <Ubuntu_IP>
-```
-
-Now add the necessary rules on Ubuntu:
-```bash
-sudo ufw allow in on lo
-sudo ufw allow in proto icmp
-```
-
-Verify from Kali:
-```bash
-ping -c 3 <Ubuntu_IP>
-```
-
-> **Reflection**: Is enabling ICMP a security risk? What information does a ping response reveal to an attacker? Look up "ICMP tunneling", how can ICMP be abused?
-
----
-
-### Scenario 4: Application Profile
+### Scenario 3: Application Profile
 
 UFW ships with built-in application profiles that map service names to ports. This is a usability feature that also reduces typos.
 
@@ -524,7 +500,7 @@ sudo ufw status verbose
 
 ---
 
-### Scenario 5: Logging
+### Scenario 4: Logging
 
 Enable UFW logging to track denied connection attempts:
 ```bash
@@ -614,7 +590,6 @@ Find the iptables rule that corresponds to each UFW rule you created. Fill in th
 | `ufw allow 80/tcp` | |
 | `ufw allow from <Kali_Subnet> to any port 22` | |
 | `ufw allow in on lo` | |
-| `ufw allow in proto icmp` | |
 
 ---
 
